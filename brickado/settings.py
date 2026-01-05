@@ -3,8 +3,9 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = "dev-secret-key-change-me"
-DEBUG = False
-ALLOWED_HOSTS = ["*"]
+DEBUG = True  # default local
+ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
+
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -84,6 +85,27 @@ import os
 DEBUG = os.getenv("DEBUG", "0") == "1"
 SECRET_KEY = os.getenv("SECRET_KEY", SECRET_KEY)
 
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",") if not DEBUG else []
-CSRF_TRUSTED_ORIGINS = os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",") if not DEBUG else []
-# =========================
+def _split_env_list(name: str) -> list[str]:
+    raw = os.getenv(name, "")
+    items = [x.strip() for x in raw.split(",") if x.strip()]
+    return items
+
+DEBUG = os.getenv("DEBUG", "0") == "1"
+SECRET_KEY = os.getenv("SECRET_KEY", SECRET_KEY)
+
+# Hosts
+if DEBUG:
+    ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
+else:
+    ALLOWED_HOSTS = _split_env_list("ALLOWED_HOSTS")
+    if not ALLOWED_HOSTS:
+        # fallback pra não quebrar deploy (ajuste pro seu domínio real)
+        ALLOWED_HOSTS = ["brickado-hub.onrender.com"]
+
+# CSRF Trusted Origins (tem que ter http/https)
+if DEBUG:
+    CSRF_TRUSTED_ORIGINS = ["http://127.0.0.1:8000", "http://localhost:8000"]
+else:
+    CSRF_TRUSTED_ORIGINS = _split_env_list("CSRF_TRUSTED_ORIGINS")
+    if not CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS = ["https://brickado-hub.onrender.com"]

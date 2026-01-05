@@ -1,0 +1,165 @@
+:root {
+  --bk-bg: #050608;
+  --bk-bg-elevated: #11121a;
+  --bk-bg-soft: #171823;
+  --bk-accent: #ffc107;
+  --bk-accent-soft: rgba(255, 193, 7, 0.15);
+  --bk-border-soft: rgba(255, 255, 255, 0.06);
+  --bk-text: #f8f9fa;
+  --bk-text-muted: #adb5bd;
+  --bk-danger: #ff4b6e;
+  --bk-success: #17c964;
+}
+
+.bk-body {
+  background: radial-gradient(circle at top, #151624 0, #050608 55%);
+  color: var(--bk-text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.bk-navbar {
+  background: linear-gradient(90deg, #050608, #151624);
+}
+
+.bk-main {
+  flex: 1;
+}
+
+.bk-footer {
+  background: #050608;
+  color: var(--bk-text-muted);
+}
+
+.card.bk-card {
+  background: linear-gradient(145deg, #11121a, #181a26);
+  border: 1px solid var(--bk-border-soft);
+  border-radius: 18px;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.4),
+    0 18px 45px rgba(0, 0, 0, 0.6);
+}
+
+.card.bk-card:hover {
+  border-color: var(--bk-accent);
+  box-shadow:
+    0 0 0 1px rgba(255, 193, 7, 0.4),
+    0 18px 55px rgba(0, 0, 0, 0.9);
+  transform: translateY(-1px);
+  transition: 0.18s ease-out;
+}
+
+.bk-pill {
+  border-radius: 999px;
+}
+
+.bk-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: var(--bk-accent-soft);
+  color: var(--bk-accent);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.bk-bottom-nav {
+  position: sticky;
+  bottom: 0;
+  background: #050608;
+  border-top: 1px solid var(--bk-border-soft);
+  z-index: 20;
+}
+
+.bk-bottom-nav a {
+  color: var(--bk-text-muted);
+  text-decoration: none;
+  font-size: 0.75rem;
+}
+
+.bk-bottom-nav a.active {
+  color: var(--bk-accent);
+}
+
+.bk-bottom-nav-icon {
+  font-size: 1.1rem;
+  display: block;
+}
+
+.bk-tag-game {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.18rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.bk-tag-game-digimon { color: #ff7675; border-color: rgba(255,118,117,0.6); }
+.bk-tag-game-lorcana { color: #74b9ff; border-color: rgba(116,185,255,0.6); }
+.bk-tag-game-union   { color: #ffeaa7; border-color: rgba(255,234,167,0.6); }
+
+/* Logo principal do topo */
+.bk-logo {
+    height: 56px;          /* tamanho ideal desktop */
+    width: auto;
+    max-height: 64px;      /* segurança */
+}
+
+/* Em telas menores */
+@media (max-width: 576px) {
+    .bk-logo {
+        height: 44px;
+    }
+}
+
+
+/* ===== Deck Builder: thumbs + filtros ===== */
+
+.card-thumb{
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  object-fit: cover;
+  border: 1px solid rgba(255,255,255,.10);
+  box-shadow: 0 10px 24px rgba(0,0,0,.40);
+  background: rgba(255,255,255,.04);
+}
+
+.bk-filter-grid{
+  display: grid;
+  grid-template-columns: repeat(6, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 1200px){
+  .bk-filter-grid{ grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 700px){
+  .bk-filter-grid{ grid-template-columns: repeat(2, 1fr); }
+}
+
+.bk-label{
+  font-size: .82rem;
+  color: rgba(255,255,255,.65);
+  margin-bottom: 4px;
+  display:block;
+}
+
+.bk-input{
+  background: rgba(255,255,255,.06) !important;
+  color: rgba(255,255,255,.92) !important;
+  border: 1px solid rgba(255,255,255,.12) !important;
+}
+.bk-input:focus{
+  border-color: rgba(255,193,7,.45) !important;
+  box-shadow: 0 0 0 .2rem rgba(255,193,7,.10) !important;
+}
+
+.bk-result-row{
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  padding: 12px 0;
+}
