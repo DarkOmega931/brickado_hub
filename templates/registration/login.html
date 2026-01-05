@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-4" style="max-width: 520px;">
+  <div class="card bk-card p-4">
+    <h1 class="h4 mb-3">Entrar</h1>
+
+    {% if form.errors %}
+      <div class="alert alert-danger py-2">
+        Usuário ou senha inválidos.
+      </div>
+    {% endif %}
+
+    <form method="post">
+      {% csrf_token %}
+      <div class="mb-3">
+        <label class="form-label">Usuário</label>
+        <input type="text" name="username" class="form-control" autofocus required>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Senha</label>
+        <input type="password" name="password" class="form-control" required>
+      </div>
+
+      <button class="btn btn-warning w-100">Entrar</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

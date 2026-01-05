@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8" />
+    <title>Brickado Hub</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+        body {
+            padding-bottom: 70px;
+        }
+        .hero {
+            background: linear-gradient(135deg, #ffb300, #ff6f00);
+            color: #fff;
+            border-radius: 16px;
+            padding: 24px;
+        }
+        .module-card {
+            border-radius: 12px;
+        }
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            border-top: 1px solid #ddd;
+            background-color: #ffffff;
+            z-index: 1000;
+        }
+        .bottom-nav a {
+            text-decoration: none;
+            color: #555;
+            font-size: 0.85rem;
+        }
+        .bottom-nav a.active {
+            color: #ff6f00;
+            font-weight: 600;
+        }
+
+        /* STORIES */
+        .stories-strip {
+            display: flex;
+            overflow-x: auto;
+            gap: 12px;
+            padding-bottom: 4px;
+        }
+        .stories-strip::-webkit-scrollbar {
+            height: 6px;
+        }
+        .stories-strip::-webkit-scrollbar-thumb {
+            background-color: rgba(0,0,0,0.3);
+            border-radius: 3px;
+        }
+        .story-bubble {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            border: 2px solid #ffb300;
+            padding: 2px;
+            overflow: hidden;
+            background: #fff;
+        }
+        .story-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+        .story-placeholder {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #ffe082;
+            color: #795548;
+            font-size: 1.5rem;
+        }
+        .story-caption {
+            max-width: 72px;
+        }
+
+        /* CARROSSEL DE NEWS */
+        .news-carousel-card {
+            position: relative;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid #ddd;
+            background-color: #000;
+        }
+
+        .news-carousel-img {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            opacity: 0.9;
+        }
+
+        .news-carousel-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 12px 16px;
+            background: linear-gradient(
+                to top,
+                rgba(0, 0, 0, 0.80),
+                rgba(0, 0, 0, 0.40),
+                transparent
+            );
+            color: #fff;
+        }
+
+        .news-carousel-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .news-carousel-text {
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body class="bg-light">
+
+<div class="container py-4">
+
+    <!-- Hero -->
+    <div class="hero mb-4">
+        <h1 class="h4 mb-2">Brickado Hub</h1>
+        <p class="mb-2">
+            Central da sua loja de TCG: pontos, decks, notícias e torneios em um só lugar.
+        </p>
+        <p class="mb-0">
+            {% if user.is_authenticated %}
+                Seus pontos atuais: <strong>{{ total_pontos }}</strong>
+            {% else %}
+                <em>Entre com sua conta para ver seus pontos e decks.</em>
+            {% endif %}
+        </p>
+    </div>
+
+    <!-- Módulos principais -->
+    <div class="row g-3 mb-4">
+
+        <div class="col-6 col-md-3">
+            <a href="{% url 'loyalty_overview' %}" class="text-decoration-none text-dark">
+                <div class="card module-card h-100 text-center p-3">
+                    ⭐
+                    <h2 class="h6 mt-2 mb-1">Pontos</h2>
+                    <p class="text-muted">Fidelidade</p>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-6 col-md-3">
+            <a href="/decks/" class="text-decoration-none text-dark">
+                <div class="card module-card h-100 text-center p-3">
+                    🎴
+                    <h2 class="h6 mt-2 mb-1">Decks</h2>
+                    <p class="text-muted">Gerenciar</p>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-6 col-md-3">
+           <a href="{% url 'news:news_list' %}" class="text-decoration-none text-dark">
+                <div class="card module-card h-100 text-center p-3">
+                    📰
+                    <h2 class="h6 mt-2 mb-1">News</h2>
+                    <p class="text-muted">Novidades</p>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-6 col-md-3">
+            <a href="/torneios/" class="text-decoration-none text-dark">
+                <div class="card module-card h-100 text-center p-3">
+                    🏆
+                    <h2 class="h6 mt-2 mb-1">Torneios</h2>
+                    <p class="text-muted">Eventos</p>
+                </div>
+            </a>
+        </div>
+
+    </div>
+
+    <!-- Stories da Brickado -->
+    {% if story_posts %}
+        <div class="mb-3">
+            <h2 class="h6 mb-2">Stories da Brickado</h2>
+            <div class="stories-strip">
+                {% for s in story_posts %}
+                    <a href="{% url 'news_story' pk=s.id %}" class="text-decoration-none text-dark">
+                        <div class="d-flex flex-column align-items-center">
+                            <div class="story-bubble">
+                                {% if s.imagem %}
+                                    <img src="{{ s.imagem.url }}" class="story-img" alt="{{ s.titulo }}">
+                                {% else %}
+                                    <div class="story-placeholder">📰</div>
+                                {% endif %}
+                            </div>
+                            <div class="story-caption small text-truncate mt-1">
+                                {{ s.titulo }}
+                            </div>
+                        </div>
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Carrossel de News -->
+    {% if news_highlights %}
+        <div class="d-flex justify-content-between align-items-center mb-2 mt-3">
+            <h2 class="h5 mb-0">📰 Últimas da Brickado</h2>
+            <a href="{% url 'news_list' %}" class="btn btn-sm btn-outline-primary">
+                Ver todas
+            </a>
+        </div>
+
+        <div id="newsCarousel" class="carousel slide mb-4" data-bs-ride="carousel">
+            <div class="carousel-inner">
+                {% for n in news_highlights %}
+                    <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                        <a href="{% url 'news_detail' pk=n.id %}" class="text-decoration-none text-light">
+                            <div class="news-carousel-card">
+                                {% if n.imagem %}
+                                    <img
+                                      src="{{ n.imagem.url }}"
+                                      class="news-carousel-img"
+                                      alt="{{ n.titulo }}"
+                                    >
+                                {% endif %}
+                                <div class="news-carousel-overlay">
+                                    <div class="news-carousel-title">
+                                        {{ n.titulo }}
+                                        {% if n.jogo %}
+                                            <span class="badge bg-secondary ms-1">{{ n.jogo }}</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="news-carousel-text">
+                                        {{ n.resumo|default:"Clique para ver os detalhes." }}
+                                    </div>
+                                    <small class="text-light-50">
+                                        {{ n.get_categoria_display }} • {{ n.criado_em|date:"d/m/Y" }}
+                                    </small>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                {% endfor %}
+            </div>
+
+            {% if news_highlights|length > 1 %}
+                <button class="carousel-control-prev" type="button" data-bs-target="#newsCarousel" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Anterior</span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#newsCarousel" data-bs-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Próximo</span>
+                </button>
+            {% endif %}
+        </div>
+    {% endif %}
+
+</div>
+
+<nav class="bottom-nav">
+    <div class="container">
+        <div class="d-flex justify-content-around py-2">
+            <a href="{% url 'home' %}" class="d-flex flex-column align-items-center active">🏠<span>Home</span></a>
+            <a href="/decks/" class="d-flex flex-column align-items-center">🎴<span>Decks</span></a>
+            <a href="{% url 'loyalty_overview' %}" class="d-flex flex-column align-items-center">⭐<span>Pontos</span></a>
+            <a href="/perfil/" class="d-flex flex-column align-items-center">👤<span>Perfil</span></a>
+        </div>
+    </div>
+</nav>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>

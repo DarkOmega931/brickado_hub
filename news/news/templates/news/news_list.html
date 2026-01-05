@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}News · Brickado Hub{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h1 class="page-title">News</h1>
+        <p class="page-subtitle">Fique por dentro das novidades da Brickado Store</p>
+    </div>
+    <a href="/" class="btn btn-outline-light btn-sm">← Home</a>
+</div>
+
+{% if featured_posts %}
+<div id="newsCarousel" class="carousel slide mb-4" data-bs-ride="carousel">
+    <div class="carousel-inner rounded-4 overflow-hidden brick-carousel">
+        {% for post in featured_posts %}
+            <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                <a href="{% url 'news:news_detail' slug=post.slug %}" class="text-decoration-none text-light">
+                    <div class="position-relative">
+                        {% if post.image %}
+                            <img src="{{ post.image.url }}" class="d-block w-100 brick-carousel-img">
+                        {% else %}
+                            <div class="d-block w-100 brick-carousel-fallback"></div>
+                        {% endif %}
+                        <div class="carousel-caption text-start">
+                            <span class="badge bg-warning text-dark mb-2">Destaque</span>
+                            <h5 class="mb-1">{{ post.title }}</h5>
+                            <p class="small text-muted mb-0">
+                                {{ post.subtitle|default:post.body|truncatechars:110 }}
+                            </p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        {% endfor %}
+    </div>
+    <button class="carousel-control-prev" type="button" data-bs-target="#newsCarousel" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Anterior</span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#newsCarousel" data-bs-slide="next">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Próxima</span>
+    </button>
+</div>
+{% endif %}
+
+{% if posts %}
+    <div class="row g-3">
+        {% for post in posts %}
+            <div class="col-12 col-md-6 col-lg-4">
+                <a href="{% url 'news:news_detail' slug=post.slug %}"
+                   class="card glass-card text-decoration-none text-light h-100">
+                    {% if post.image %}
+                        <div class="ratio ratio-16x9">
+                            <img src="{{ post.image.url }}" class="card-img-top object-fit-cover" alt="{{ post.title }}">
+                        </div>
+                    {% endif %}
+                    <div class="card-body d-flex flex-column">
+                        <span class="badge bg-outline-yellow mb-2">News</span>
+                        <h5 class="card-title mb-1">{{ post.title }}</h5>
+                        <p class="text-muted small mb-2">
+                            {{ post.subtitle|default:post.body|truncatechars:90 }}
+                        </p>
+                        <p class="text-muted small mt-auto mb-0">
+                            {{ post.published_at|date:"d/m/Y" }} · {{ post.author_name|default:"Brickado Team" }}
+                        </p>
+                    </div>
+                </a>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="card glass-card">
+        <div class="card-body text-muted">
+            Nenhuma notícia cadastrada ainda.
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

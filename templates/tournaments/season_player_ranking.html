@@ -1,0 +1,44 @@
+{# templates/tournaments/season_player_ranking.html #}
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Ranking de Jogadores</h1>
+
+  {% if season %}
+    <p><strong>Temporada:</strong> {{ season.name|default:season }}</p>
+  {% endif %}
+
+  {% if players %}
+    <table border="1" cellpadding="8" cellspacing="0">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Jogador</th>
+          <th>Pontos</th>
+          <th>Vitórias</th>
+          <th>Derrotas</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in players %}
+          <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>
+              {# row pode ser dict ou objeto, então tentamos os dois jeitos #}
+              {{ row.player|default:row.user|default:row.nome|default:row.name|default:"(sem nome)" }}
+            </td>
+            <td>{{ row.points|default:row.pontos|default:0 }}</td>
+            <td>{{ row.wins|default:row.vitorias|default:0 }}</td>
+            <td>{{ row.losses|default:row.derrotas|default:0 }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>Nenhum jogador encontrado para esta temporada.</p>
+  {% endif %}
+
+  <p style="margin-top: 16px;">
+    <a href="{% url 'season_list' %}">Voltar</a>
+  </p>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+  <h1>Digimon Sync B (Full)</h1>
+
+  <p>
+    Atualiza a base local inteira. Primeiro puxa a lista via <code>getAllCards</code>,
+    depois busca detalhes de cada carta via <code>/search?card=...</code> e salva no banco.
+  </p>
+
+  <form method="post" style="margin-top:16px;">
+    {% csrf_token %}
+    <fieldset class="module aligned">
+      <div class="form-row">
+        <label><strong>Somente faltantes:</strong></label>
+        <input type="checkbox" name="only_missing">
+      </div>
+
+      <div class="form-row">
+        <label><strong>Limite (opcional):</strong></label>
+        <input type="text" name="limit" placeholder="ex: 200">
+        <p class="help">Se vazio, tenta sincronizar tudo.</p>
+      </div>
+
+      <div class="form-row">
+        <label><strong>Sleep (segundos) entre requests:</strong></label>
+        <input type="text" name="sleep_s" value="0.25">
+        <p class="help">Recomendado 0.25 a 0.60.</p>
+      </div>
+    </fieldset>
+
+    <div class="submit-row">
+      <input type="submit" value="Rodar Sync B" class="default">
+      <a class="button cancel-link" href="../">Voltar</a>
+    </div>
+  </form>
+{% endblock %}

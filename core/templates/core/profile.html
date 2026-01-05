@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4">
+
+    <div class="text-center mb-4">
+        {% if profile.avatar %}
+            <img src="{{ profile.avatar.url }}" class="rounded-circle mb-2" width="120" height="120">
+        {% else %}
+            <img src="{% static 'images/default_avatar.png' %}" class="rounded-circle mb-2" width="120" height="120">
+        {% endif %}
+        <h4>{{ user.username }}</h4>
+        <span class="badge bg-warning text-dark">Tier: {{ profile.tier }}</span>
+    </div>
+
+    <div class="card p-3 mb-3">
+        <h6>Pontos de Fidelidade</h6>
+        <p class="fs-4 fw-bold">{{ pontos }} pts</p>
+        <a href="{% url 'loyalty_overview' %}" class="btn btn-outline-primary btn-sm w-100">Ver extrato de pontos</a>
+    </div>
+
+    <div class="list-group">
+        <a href="{% url 'deck_list' %}" class="list-group-item list-group-item-action">🃏 Meus Decks</a>
+        <a href="{% url 'tournaments_home' %}" class="list-group-item list-group-item-action">🏆 Torneios</a>
+        <a href="{% url 'profile_edit' %}" class="list-group-item list-group-item-action">✏️ Editar Perfil</a>
+        <a href="{% url 'logout' %}" class="list-group-item list-group-item-action text-danger">❌ Sair</a>
+    </div>
+
+</div>
+{% endblock %}

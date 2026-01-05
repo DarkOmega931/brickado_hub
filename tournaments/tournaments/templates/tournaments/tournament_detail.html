@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ tournament.name }} · Torneio · Brickado Hub{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h1 class="page-title">{{ tournament.name }}</h1>
+        <p class="page-subtitle">
+            {{ tournament.get_game_display }} • {{ tournament.date|date:"d/m/Y" }} • {{ tournament.location }}
+        </p>
+    </div>
+    <a href="{% url 'tournaments_home' %}" class="btn btn-outline-light btn-sm">← Voltar para torneios</a>
+</div>
+
+<div class="card glass-card mb-3">
+    <div class="card-body">
+        <p class="mb-1">
+            <strong>Origem:</strong> {{ tournament.get_origin_display }}<br>
+            <strong>Formato:</strong> {{ tournament.get_format_display }} •
+            <strong>Conta para ranking:</strong> {% if tournament.counts_for_ranking %}Sim{% else %}Não{% endif %}
+        </p>
+        <p class="mb-1">
+            <strong>Status:</strong> {{ tournament.get_status_display }} •
+            <strong>Rodada:</strong>
+            {% if current_round %}
+                {{ current_round.number }} de {{ tournament.total_rounds }}
+            {% else %}
+                Não iniciado
+            {% endif %}
+        </p>
+        <p class="mb-1">
+            Pontuação: vitória = {{ tournament.points_win }}
+            | empate = {{ tournament.points_draw }}
+            | derrota = {{ tournament.points_loss }}
+        </p>
+    </div>
+</div>
+
+<div class="card glass-card mb-3">
+    <div class="card-body d-flex justify-content-between flex-wrap gap-2">
+        <div>
+            <h2 class="h6 mb-1">Minha participação</h2>
+            {% if player_entry %}
+                <p class="small text-muted mb-1">
+                    Você está inscrito como <strong>{{ player_entry.player_name }}</strong>
+                    usando o deck <strong>{{ player_entry.deck_archtype_name }}</strong>.
+                </p>
+                {% if tournament.status == "RUNNING" %}
+                    <a href="{% url 'tournament_my_match' pk=tournament.id %}" class="btn btn-primary btn-sm">
+                        Ver minha partida atual
+                    </a>
+                {% endif %}
+            {% else %}
+                {% if tournament.status == "OPEN" %}
+                    <p class="small text-muted mb-1">
+                        Inscreva-se para participar deste torneio.
+                    </p>
+                    <a href="#" class="btn btn-warning btn-sm disabled">
+                        (Inscrição pelo app ainda não implementada)
+                    </a>
+                {% else %}
+                    <p class="small text-muted mb-0">
+                        Inscrições encerradas ou não disponíveis pelo app.
+                    </p>
+                {% endif %}
+            {% endif %}
+        </div>
+
+        {% if is_staff %}
+            <div class="text-end">
+                <span class="badge bg-outline-yellow mb-2">Staff</span><br>
+                <a href="{% url 'tournament_admin_panel' pk=tournament.id %}"
+                   class="btn btn-outline-light btn-sm">
+                    Abrir painel do organizador
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card glass-card">
+    <div class="card-header">
+        <h2 class="h6 mb-0">Classificação</h2>
+    </div>
+    <div class="card-body p-0">
+        {% if standings %}
+            <div class="table-responsive">
+                <table class="table table-dark table-sm mb-0 align-middle brick-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Jogador</th>
+                            <th>Deck / Arquétipo</th>
+                            <th>Vit</th>
+                            <th>Emp</th>
+                            <th>Der</th>
+                            <th>Pontos</th>
+                            <th>OMW%</th>
+                            <th>OOMW%</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in standings %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>{{ s.player.player_name }}</td>
+                                <td>{{ s.player.deck_archtype_name }}</td>
+                                <td>{{ s.wins }}</td>
+                                <td>{{ s.draws }}</td>
+                                <td>{{ s.losses }}</td>
+                                <td>{{ s.points }}</td>
+                                <td>{{ s.omw|floatformat:2 }}%</td>
+                                <td>{{ s.oomw|floatformat:2 }}%</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <p class="small text-muted px-3 py-2 mb-0">
+                Classificação final do torneio, já considerando os critérios de desempate.
+            </p>
+        {% else %}
+            <p class="text-muted p-3 mb-0">
+                Nenhum resultado lançado ainda para este torneio.
+            </p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

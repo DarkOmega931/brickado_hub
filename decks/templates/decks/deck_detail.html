@@ -1,0 +1,262 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-4">
+
+  <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+    <div>
+      <h1 class="h4 mb-1">🎴 {{ deck.nome }}</h1>
+      <div class="text-secondary small">
+        {{ deck.get_jogo_display }}
+        {% if deck.arquetipo %} • {{ deck.arquetipo }}{% endif %}
+      </div>
+    </div>
+
+    <div class="d-flex gap-2">
+      <a href="{% url 'deck_list' %}" class="btn btn-outline-secondary btn-sm">← Voltar</a>
+      <a href="{% url 'deck_import' pk=deck.id %}" class="btn btn-outline-warning btn-sm">Importar lista</a>
+      <a href="{% url 'deck_delete' pk=deck.id %}" class="btn btn-outline-danger btn-sm">Deletar</a>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <!-- Coluna esquerda: Deck -->
+    <div class="col-12 col-lg-6">
+      <div class="card bg-dark border-warning-subtle p-3">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h2 class="h6 mb-0">Cartas no deck</h2>
+          <span class="badge bg-secondary">{{ deck_cards|length }} linhas</span>
+        </div>
+
+        {% if deck_cards %}
+          {% for dc in deck_cards %}
+            <div class="d-flex gap-2 align-items-center border border-secondary rounded p-2 mb-2">
+              {% if dc.card %}
+                <img src="{{ dc.card.cdn_image }}" alt="{{ dc.card.name }}" style="height:86px; width:auto;" class="rounded">
+              {% else %}
+                <div style="height:86px; width:60px;" class="bg-black rounded border border-secondary"></div>
+              {% endif %}
+
+              <div class="flex-grow-1">
+                <div class="fw-semibold">{{ dc.quantidade }}x {{ dc.codigo_carta }} • {{ dc.nome_carta }}</div>
+                {% if dc.card %}
+                  <div class="small text-secondary">{{ dc.card.card_type }} • {{ dc.card.color }}{% if dc.card.level %} • Lv {{ dc.card.level }}{% endif %}</div>
+                {% endif %}
+              </div>
+
+              <form method="post" action="{% url 'deck_remove_card' pk=deck.id deckcard_id=dc.id %}">
+                {% csrf_token %}
+                <button class="btn btn-outline-danger btn-sm">Remover</button>
+              </form>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="text-secondary">Nenhuma carta no deck ainda.</div>
+        {% endif %}
+      </div>
+
+      <div class="card bg-dark border-warning-subtle p-3 mt-3">
+        <h2 class="h6 mb-2">💰 Preço do deck</h2>
+
+        {% if price_rows %}
+          <div class="table-responsive">
+            <table class="table table-dark table-sm align-middle mb-2">
+              <thead>
+                <tr>
+                  <th>Qtd</th>
+                  <th>Carta</th>
+                  <th class="text-end">Unit</th>
+                  <th class="text-end">Sub</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for r in price_rows %}
+                  <tr>
+                    <td>{{ r.qty }}</td>
+                    <td>
+                      <div class="small text-secondary">{{ r.cardnumber }}</div>
+                      <div class="fw-semibold">
+                        {% if r.url %}
+                          <a href="{{ r.url }}" target="_blank" class="text-warning text-decoration-none">{{ r.name }}</a>
+                        {% else %}
+                          {{ r.name }}
+                        {% endif %}
+                      </div>
+                    </td>
+                    <td class="text-end">
+                      {% if r.unit %}R$ {{ r.unit }}{% else %}<span class="text-secondary">—</span>{% endif %}
+                    </td>
+                    <td class="text-end">
+                      {% if r.subtotal %}R$ {{ r.subtotal }}{% else %}<span class="text-secondary">—</span>{% endif %}
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          <div class="d-flex justify-content-between">
+            <div class="text-secondary small">
+              {% if missing_prices %}{{ missing_prices }} carta(s) sem preço no admin.{% endif %}
+            </div>
+            <div class="fw-bold">Total: R$ {{ deck_total }}</div>
+          </div>
+        {% else %}
+          <div class="text-secondary">Sem itens para precificar.</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Coluna direita: Busca avançada -->
+    <div class="col-12 col-lg-6">
+      <div class="card bg-dark border-warning-subtle p-3">
+        <h2 class="h6 mb-2">🔎 Buscar cartas (manual)</h2>
+
+        <form method="get" class="row g-2 mb-3">
+            <div class="col-12">
+                <label class="form-label text-light fw-semibold mb-1">Busca livre (opcional)</label>
+                <input name="q" value="{{ filters.q }}" class="form-control"
+                        placeholder="Ex: Aldamon / BT4-016 / Digimon / Red / Wizard...">
+        </div>
+
+        <div class="col-12 col-md-6">
+            <label class="form-label text-light fw-semibold mb-1">name</label>
+            <input name="name" value="{{ filters.name }}" class="form-control" placeholder="Ex: Aldamon">
+        </div>
+
+        <div class="col-12 col-md-6">
+            <label class="form-label text-light fw-semibold mb-1">id (cardnumber)</label>
+            <input name="id" value="{{ filters.id }}" class="form-control" placeholder="Ex: BT4-016">
+        </div>
+
+        <div class="col-12 col-md-6">
+             <label class="form-label text-light fw-semibold mb-1">type</label>
+             <input name="type" value="{{ filters.type }}" class="form-control" placeholder="Ex: Digimon">
+             <div class="form-text text-secondary">Ex: Digimon, Tamer, Option, Digi-Egg</div>
+        </div>
+
+
+        <div class="col-6 col-md-3">
+            <label class="form-label text-light fw-semibold mb-1">level</label>
+            <input name="level" value="{{ filters.level }}" class="form-control" placeholder="Ex: 5">
+        </div>
+
+        <div class="col-6 col-md-3">
+            <label class="form-label text-light fw-semibold mb-1">dp min</label>
+            <input name="dp_min" value="{{ filters.dp_min }}" class="form-control" placeholder="Ex: 7000">
+        </div>
+
+        <div class="col-6 col-md-3">
+            <label class="form-label text-light fw-semibold mb-1">dp max</label>
+            <input name="dp_max" value="{{ filters.dp_max }}" class="form-control" placeholder="Ex: 9000">
+        </div>
+
+        <div class="col-6 col-md-3">
+            <label class="form-label text-light fw-semibold mb-1">rarity</label>
+            <input name="rarity" value="{{ filters.rarity }}" class="form-control" placeholder="Ex: SR">
+        </div>
+
+         <div class="col-6 col-md-3">
+            <label class="form-label text-light fw-semibold mb-1">play_cost min</label>
+             <input name="play_cost_min" value="{{ filters.play_cost_min }}" class="form-control" placeholder="Ex: 8">
+        </div>
+
+        <div class="col-6 col-md-3">
+             <label class="form-label text-light fw-semibold mb-1">play_cost max</label>
+            <input name="play_cost_max" value="{{ filters.play_cost_max }}" class="form-control" placeholder="Ex: 12">
+         </div>
+
+        <div class="col-6 col-md-3">
+            <label class="form-label text-light fw-semibold mb-1">evolution_cost min</label>
+            <input name="evolution_cost_min" value="{{ filters.evolution_cost_min }}" class="form-control" placeholder="Ex: 3">
+        </div>
+
+        <div class="col-6 col-md-3">
+           <label class="form-label text-light fw-semibold mb-1">evolution_cost max</label>
+           <input name="evolution_cost_max" value="{{ filters.evolution_cost_max }}" class="form-control" placeholder="Ex: 4">
+        </div>
+
+        <div class="col-12 col-md-4">
+             <label class="form-label text-light fw-semibold mb-1">evolution_color</label>
+             <input name="evolution_color" value="{{ filters.evolution_color }}" class="form-control" placeholder="Ex: Red">
+        </div>
+
+        <div class="col-12 col-md-4">
+            <label class="form-label text-light fw-semibold mb-1">evolution_level</label>
+            <input name="evolution_level" value="{{ filters.evolution_level }}" class="form-control" placeholder="Ex: 4">
+        </div>
+
+        <div class="col-12 col-md-4">
+            <label class="form-label text-light fw-semibold mb-1">attribute</label>
+            <input name="attribute" value="{{ filters.attribute }}" class="form-control" placeholder="Ex: Variable">
+        </div>
+
+        <div class="col-12 col-md-4">
+            <label class="form-label text-light fw-semibold mb-1">color</label>
+            <input name="color" value="{{ filters.color }}" class="form-control" placeholder="Ex: Red">
+        </div>
+
+        <div class="col-12 col-md-4">
+            <label class="form-label text-light fw-semibold mb-1">color2</label>
+             <input name="color2" value="{{ filters.color2 }}" class="form-control" placeholder="(opcional)">
+        </div>
+
+        <div class="col-12 col-md-4">
+            <label class="form-label text-light fw-semibold mb-1">form</label>
+            <input name="form" value="{{ filters.form }}" class="form-control" placeholder="Ex: Hybrid">
+        </div>
+
+        <div class="col-12 col-md-6">
+            <label class="form-label text-light fw-semibold mb-1">digi_type</label>
+            <input name="digi_type" value="{{ filters.digi_type }}" class="form-control" placeholder="Ex: Wizard">
+        </div>
+
+        <div class="col-12 col-md-6">
+            <label class="form-label text-light fw-semibold mb-1">digi_type2</label>
+            <input name="digi_type2" value="{{ filters.digi_type2 }}" class="form-control" placeholder="(opcional)">
+        </div>
+
+        <div class="col-12 d-flex gap-2">
+            <button class="btn btn-warning w-100 fw-semibold">Filtrar</button>
+            <a href="{% url 'deck_detail' pk=deck.id %}" class="btn btn-outline-secondary w-100">Limpar</a>
+         </div>
+    </form>
+
+
+        {% if search_results %}
+          {% for c in search_results %}
+            <div class="d-flex gap-2 align-items-center border border-secondary rounded p-2 mb-2">
+              <img src="{{ c.cdn_image }}" alt="{{ c.name }}" style="height:86px; width:auto;" class="rounded">
+
+              <div class="flex-grow-1">
+                <div class="fw-semibold">{{ c.cardnumber }} • {{ c.name }}</div>
+                <div class="small text-secondary">
+                  {{ c.card_type }} • {{ c.color }}
+                  {% if c.level %} • Lv {{ c.level }}{% endif %}
+                  {% if c.dp %} • DP {{ c.dp }}{% endif %}
+                </div>
+                {% if c.pack %}
+                  <div class="small text-secondary">{{ c.pack }}</div>
+                {% endif %}
+              </div>
+
+              <form method="post" action="{% url 'deck_add_card' pk=deck.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="card_id" value="{{ c.id }}">
+                <input type="number" name="qty" value="1" min="1" max="20" class="form-control form-control-sm mb-1" style="width:76px;">
+                <button class="btn btn-warning btn-sm w-100">Add</button>
+              </form>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="text-secondary">Nenhuma carta encontrada com os filtros atuais.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+<a href="{% url 'deck_export' pk=deck.id %}" class="btn btn-outline-warning btn-sm">
+  Exportar lista
+</a>

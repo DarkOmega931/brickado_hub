@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ post.title }} · News · Brickado Hub{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <a href="{% url 'news:news_list' %}" class="btn btn-link text-muted p-0 mb-1">
+            ← Voltar para News
+        </a>
+        <h1 class="page-title">{{ post.title }}</h1>
+        <p class="page-subtitle small text-muted">
+            {{ post.published_at|date:"d/m/Y H:i" }} · {{ post.author_name|default:"Brickado Team" }}
+        </p>
+    </div>
+</div>
+
+<div class="card glass-card">
+    {% if post.image %}
+        <img src="{{ post.image.url }}" class="card-img-top object-fit-cover rounded-top" style="max-height: 320px;">
+    {% endif %}
+    <div class="card-body">
+        {% if post.subtitle %}
+            <p class="lead text-muted">{{ post.subtitle }}</p>
+            <hr>
+        {% endif %}
+        <div class="news-body">
+            {{ post.body|linebreaks }}
+        </div>
+    </div>
+</div>
+{% endblock %}

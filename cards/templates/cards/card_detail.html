@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ card.name }} · Brickado Hub{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h1 class="page-title">{{ card.name }}</h1>
+        <p class="page-subtitle">{{ card.cardnumber }} • {{ card.color }} • {{ card.level }}</p>
+    </div>
+    <a href="javascript:history.back()" class="btn btn-outline-light btn-sm">← Voltar</a>
+</div>
+
+<div class="row g-3">
+    <div class="col-12 col-md-4">
+        <div class="card glass-card">
+            {% if card.image_url %}
+                <img src="{{ card.image_url }}" class="card-img-top object-fit-cover rounded-top" alt="{{ card.name }}">
+            {% else %}
+                <div class="card-body text-muted text-center">
+                    Sem imagem disponível
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-12 col-md-8">
+        <div class="card glass-card">
+            <div class="card-body">
+                <h2 class="h6 mb-3">Detalhes da carta</h2>
+                <dl class="row small mb-0">
+                    <dt class="col-sm-4 text-muted">Nome</dt>
+                    <dd class="col-sm-8">{{ card.name }}</dd>
+
+                    <dt class="col-sm-4 text-muted">Número</dt>
+                    <dd class="col-sm-8">{{ card.cardnumber }}</dd>
+
+                    <dt class="col-sm-4 text-muted">Tipo</dt>
+                    <dd class="col-sm-8">{{ card.type }}</dd>
+
+                    <dt class="col-sm-4 text-muted">Atributo</dt>
+                    <dd class="col-sm-8">{{ card.attribute }}</dd>
+
+                    <dt class="col-sm-4 text-muted">Digi-type</dt>
+                    <dd class="col-sm-8">{{ card.digitype }}</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

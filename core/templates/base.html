@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="utf-8">
+    <title>Brickado Hub</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap CDN (rápido pra dev) -->
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+        crossorigin="anonymous"
+    />
+
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #f9fafb;
+        }
+        .navbar-brand {
+            font-weight: 700;
+            letter-spacing: 0.04em;
+        }
+        .app-shell {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .app-main {
+            flex: 1;
+        }
+        /* Rodapé tipo app mobile */
+        .bottom-nav {
+            position: sticky;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.95);
+            border-top: 1px solid rgba(148, 163, 184, 0.35);
+            backdrop-filter: blur(12px);
+            z-index: 30;
+        }
+        .bottom-nav a {
+            color: #cbd5f5;
+            text-decoration: none;
+            font-size: 0.8rem;
+        }
+        .bottom-nav a.active {
+            color: #facc15;
+            font-weight: 600;
+        }
+    </style>
+
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+<div class="app-shell">
+
+    <!-- Navbar superior -->
+    <nav class="navbar navbar-dark bg-dark border-bottom border-secondary px-3">
+        <a class="navbar-brand d-flex align-items-center gap-2" href="/">
+            🧱 Brickado Hub
+        </a>
+        <div class="d-flex gap-2">
+            <a href="/decks/" class="btn btn-sm btn-outline-light">Decks</a>
+            <a href="/torneios/" class="btn btn-sm btn-outline-warning">Torneios</a>
+        </div>
+    </nav>
+
+    <!-- Conteúdo principal -->
+    <main class="app-main">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Navegação inferior tipo app -->
+    <div class="bottom-nav">
+        <div class="container">
+            <div class="row text-center py-2">
+                <div class="col-3">
+                    <a href="/" class="{% if request.path == '/' %}active{% endif %}">
+                        <div>🏠</div>
+                        <div>Home</div>
+                    </a>
+                </div>
+                <div class="col-3">
+                    <a href="/decks/" class="{% if request.path|slice:':7' == '/decks/' %}active{% endif %}">
+                        <div>🎴</div>
+                        <div>Decks</div>
+                    </a>
+                </div>
+                <div class="col-3">
+                    <a href="/fidelidade/meus-pontos/" class="{% if '/fidelidade' in request.path %}active{% endif %}">
+                        <div>⭐</div>
+                        <div>Pontos</div>
+                    </a>
+                </div>
+                <div class="col-3">
+                    <a href="/perfil/" class="{% if '/perfil' in request.path %}active{% endif %}">
+                        <div>👤</div>
+                        <div>Perfil</div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

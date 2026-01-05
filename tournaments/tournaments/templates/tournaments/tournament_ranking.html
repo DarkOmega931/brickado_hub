@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Ranking Geral · Brickado Hub{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h1 class="page-title">Ranking geral de jogadores</h1>
+        <p class="page-subtitle">Somatório de resultados dos torneios válidos</p>
+    </div>
+    <a href="{% url 'tournaments_home' %}" class="btn btn-outline-light btn-sm">← Torneios</a>
+</div>
+
+{% if season %}
+    <div class="alert alert-dark border-0 mb-3 glass-card">
+        <strong>Temporada atual:</strong> {{ season.name }}
+        <span class="text-muted">({{ season.start_date|date:"d/m/Y" }} - {{ season.end_date|date:"d/m/Y" }})</span>
+    </div>
+{% endif %}
+
+<div class="card glass-card">
+    <div class="card-body p-0">
+        {% if rankings %}
+            <div class="table-responsive">
+                <table class="table table-dark table-sm mb-0 align-middle brick-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Jogador</th>
+                            <th>Pontos totais</th>
+                            <th>Torneios jogados</th>
+                            <th>Vit.</th>
+                            <th>Emp.</th>
+                            <th>Der.</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in rankings %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>{{ r.player_name }}</td>
+                                <td>{{ r.total_points }}</td>
+                                <td>{{ r.tournaments_played }}</td>
+                                <td>{{ r.wins }}</td>
+                                <td>{{ r.draws }}</td>
+                                <td>{{ r.losses }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-muted p-3 mb-0">Nenhum resultado computado ainda.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

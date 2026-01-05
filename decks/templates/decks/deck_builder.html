@@ -1,0 +1,71 @@
+<form method="get" class="bk-filter-grid mb-3">
+  <div>
+    <label class="bk-label">Busca rápida (qualquer campo)</label>
+    <input class="form-control bk-input" type="text" name="q" value="{{ request.GET.q }}">
+  </div>
+
+  <div>
+    <label class="bk-label">Nome contém</label>
+    <input class="form-control bk-input" type="text" name="name" value="{{ request.GET.name }}">
+  </div>
+
+  <div>
+    <label class="bk-label">Cardnumber</label>
+    <input class="form-control bk-input" type="text" name="cardnumber" value="{{ request.GET.cardnumber }}">
+  </div>
+
+  <div>
+    <label class="bk-label">Tipo</label>
+    <select class="form-select bk-input" name="card_type">
+      <option value="">Todos</option>
+      {% for opt in card_type_choices %}
+        <option value="{{ opt }}" {% if request.GET.card_type == opt %}selected{% endif %}>{{ opt }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div>
+    <label class="bk-label">Cor</label>
+    <select class="form-select bk-input" name="color">
+      <option value="">Todas</option>
+      {% for opt in color_choices %}
+        <option value="{{ opt }}" {% if request.GET.color == opt %}selected{% endif %}>{{ opt }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div>
+    <label class="bk-label">Level</label>
+    <input class="form-control bk-input" type="number" min="0" name="level" value="{{ request.GET.level }}">
+  </div>
+
+  <div>
+    <label class="bk-label">DP ≥</label>
+    <input class="form-control bk-input" type="number" min="0" name="dp_min" value="{{ request.GET.dp_min }}">
+  </div>
+
+  <div>
+    <label class="bk-label">Pack contém</label>
+    <input class="form-control bk-input" type="text" name="pack" value="{{ request.GET.pack }}">
+  </div>
+
+  <div>
+    <label class="bk-label">Raridade</label>
+    <input class="form-control bk-input" type="text" name="rarity" value="{{ request.GET.rarity }}">
+  </div>
+
+  <div>
+    <label class="bk-label">Digitype</label>
+    <input class="form-control bk-input" type="text" name="digitype" value="{{ request.GET.digitype }}">
+  </div>
+
+  <div>
+    <label class="bk-label">Attribute</label>
+    <input class="form-control bk-input" type="text" name="attribute" value="{{ request.GET.attribute }}">
+  </div>
+
+  <div class="d-flex gap-2 align-items-end">
+    <button class="btn btn-warning w-100" type="submit">Buscar</button>
+    <a class="btn btn-outline-secondary" href="?">Limpar</a>
+  </div>
+</form>

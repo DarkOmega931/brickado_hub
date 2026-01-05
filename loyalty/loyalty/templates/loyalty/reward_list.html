@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Resgatar Recompensas · Brickado Hub{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h1 class="page-title">Resgatar recompensas</h1>
+        <p class="page-subtitle">Transforme seus pontos em coisas legais</p>
+    </div>
+    <a href="/" class="btn btn-outline-light btn-sm">← Home</a>
+</div>
+
+<div class="card glass-card mb-3">
+    <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+            <span class="text-muted small">Seus pontos</span>
+            <div class="fs-3 fw-bold neon-yellow">{{ pontos }}</div>
+        </div>
+        <div class="text-end">
+            <span class="badge bg-secondary">Nível: {{ nivel_nome }}</span>
+            <span class="badge bg-dark ms-1">Multiplicador: x{{ nivel_multiplicador }}</span>
+        </div>
+    </div>
+</div>
+
+{% if rewards %}
+    <div class="row g-3">
+        {% for r in rewards %}
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="card glass-card h-100 reward-card d-flex flex-column">
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title mb-1">{{ r.nome }}</h5>
+                        <p class="card-text text-muted small flex-grow-1">{{ r.descricao }}</p>
+                        <div class="d-flex justify-content-between align-items-center mt-2">
+                            <span class="fw-bold">
+                                <span class="neon-yellow">{{ r.custo_pontos }}</span> pts
+                            </span>
+                            {% if r.custo_pontos <= pontos %}
+                                <form method="post" class="mb-0">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="reward_id" value="{{ r.id }}">
+                                    <button class="btn btn-warning btn-sm">
+                                        Resgatar
+                                    </button>
+                                </form>
+                            {% else %}
+                                <span class="badge bg-secondary">Pontos insuficientes</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="card glass-card">
+        <div class="card-body text-muted">
+            Nenhuma recompensa cadastrada ainda.
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

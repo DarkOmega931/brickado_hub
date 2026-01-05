@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Novo Deck · Brickado Hub{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h1 class="page-title">Novo deck</h1>
+        <p class="page-subtitle">Dê um nome e escolha o jogo</p>
+    </div>
+    <a href="{% url 'deck_list' %}" class="btn btn-outline-light btn-sm">← Meus decks</a>
+</div>
+
+<div class="card glass-card">
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <div class="row g-3">
+                <div class="col-12 col-md-6">
+                    <label class="form-label">Nome do deck</label>
+                    <input type="text" name="nome" class="form-control" required>
+                </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label">Jogo</label>
+                    <select name="jogo" class="form-select" required>
+                        <option value="">Selecione</option>
+                        {% for value,label in jogo_choices %}
+                            <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12 col-md-3 d-flex align-items-end">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="publico" name="publico">
+                        <label class="form-check-label" for="publico">Deck público</label>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Descrição (opcional)</label>
+                    <textarea name="descricao" rows="3" class="form-control"
+                              placeholder="Ex: Focado em controle de mesa e remoções."></textarea>
+                </div>
+            </div>
+
+            <div class="mt-4 d-flex justify-content-end gap-2">
+                <a href="{% url 'deck_list' %}" class="btn btn-outline-secondary">Cancelar</a>
+                <button type="submit" class="btn btn-warning">Criar deck</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

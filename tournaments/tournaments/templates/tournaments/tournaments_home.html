@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Torneios · Brickado Hub{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h1 class="page-title">Torneios</h1>
+        <p class="page-subtitle">Agenda de eventos competitivos da Brickado Store</p>
+    </div>
+    <a href="/" class="btn btn-outline-light btn-sm">← Home</a>
+</div>
+
+<div class="mb-3 d-flex justify-content-between flex-wrap gap-2">
+    <a href="{% url 'tournament_ranking' %}" class="btn btn-primary btn-sm">Ver ranking geral de jogadores</a>
+</div>
+
+{% if tournaments %}
+    <div class="list-group glass-list">
+        {% for t in tournaments %}
+            <a href="{% url 'tournament_detail' pk=t.id %}"
+               class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="h6 mb-1">{{ t.name }}</h2>
+                    <p class="small text-muted mb-0">
+                        {{ t.get_game_display }} • {{ t.date|date:"d/m/Y" }} • {{ t.location }}
+                    </p>
+                    <p class="small text-muted mb-0">
+                        Formato: {{ t.get_format_display }} • Origem: {{ t.get_origin_display }}
+                    </p>
+                </div>
+                <div class="text-end">
+                    {% if t.status == "OPEN" %}
+                        <span class="badge bg-success mb-1">Inscrições ativas</span>
+                    {% elif t.status == "RUNNING" %}
+                        <span class="badge bg-warning text-dark mb-1">Em andamento</span>
+                    {% else %}
+                        <span class="badge bg-secondary mb-1">Encerrado</span>
+                    {% endif %}
+                    <div class="small text-muted">{{ t.players.count }} jogadores</div>
+                </div>
+            </a>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="card glass-card">
+        <div class="card-body text-muted">
+            Nenhum torneio cadastrado ainda.
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

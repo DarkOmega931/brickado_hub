@@ -1,0 +1,23 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+  <div style="max-width: 760px;">
+    <h1>{{ title }}</h1>
+    <p>Colunas obrigatórias: <code>cardnumber</code>, <code>price</code></p>
+    <p>Opcionais: <code>name</code>, <code>product_url</code>, <code>in_stock</code></p>
+
+    <form method="post" enctype="multipart/form-data" style="margin-top: 16px;">
+      {% csrf_token %}
+      <input type="file" name="csv_file" accept=".csv,text/csv" required />
+      <div style="margin-top: 12px;">
+        <button class="default" type="submit">Importar</button>
+        <a href="../" class="button">Voltar</a>
+      </div>
+    </form>
+
+    <hr style="margin: 18px 0;" />
+    <h3>Exemplo de CSV</h3>
+<pre>cardnumber,name,price,product_url,in_stock
+BT4-016,Aldamon,12.90,https://...,1
+BT8-084,MagnaGarurumon,9.50,https://...,1</pre>
+  </div>
+{% endblock %}

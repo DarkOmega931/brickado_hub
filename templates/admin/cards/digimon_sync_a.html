@@ -1,0 +1,39 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+  <h1>Digimon Sync A (Seed)</h1>
+
+  <p>
+    Envie um TXT/CSV com <strong>cardnumbers</strong> para sincronizar apenas o que você quer.
+    Isso evita rate limit e mantém o sync sob seu controle.
+  </p>
+
+  <p>
+    <a class="button" href="../sync-a/template/">Baixar modelo seed</a>
+  </p>
+
+  <form method="post" enctype="multipart/form-data" style="margin-top:16px;">
+    {% csrf_token %}
+    <fieldset class="module aligned">
+      <div class="form-row">
+        <label><strong>Arquivo seed (TXT/CSV):</strong></label>
+        <input type="file" name="seed_file" accept=".txt,.csv" required>
+      </div>
+
+      <div class="form-row">
+        <label><strong>Somente faltantes:</strong></label>
+        <input type="checkbox" name="only_missing">
+      </div>
+
+      <div class="form-row">
+        <label><strong>Sleep (segundos) entre requests:</strong></label>
+        <input type="text" name="sleep_s" value="0.25">
+        <p class="help">Use 0.25 a 0.60 para evitar estourar limite.</p>
+      </div>
+    </fieldset>
+
+    <div class="submit-row">
+      <input type="submit" value="Rodar Sync A" class="default">
+      <a class="button cancel-link" href="../">Voltar</a>
+    </div>
+  </form>
+{% endblock %}

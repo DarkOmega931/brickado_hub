@@ -1,0 +1,76 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+  <h1>Digimon Sync (manual)</h1>
+
+  <p>
+    Esse sync <strong>NÃO é tempo real</strong>. Ele grava no banco local para o Deck Builder usar filtros/imagens.
+  </p>
+
+  <p>
+    <a class="button" href="{% url 'admin:cards_digimon_sync_template' %}">Baixar modelo seed (TXT)</a>
+  </p>
+
+  <hr>
+
+  <h2>Modo A: Sync GLOBAL (getAllCards)</h2>
+  <p>Recomendado para atualizar a base inteira (novos sets, inicialização, rebuild de filtros).</p>
+
+  <form method="post" style="margin-top: 10px;">
+    {% csrf_token %}
+    <input type="hidden" name="mode" value="GLOBAL">
+
+    <div class="form-row">
+      <label><strong>Series:</strong></label>
+      <input type="text" name="series" value="Digimon Card Game" style="min-width: 320px;">
+    </div>
+
+    <div class="form-row" style="margin-top: 8px;">
+      <label><strong>Sort:</strong></label>
+      <input type="text" name="sort" value="name" style="min-width: 120px;">
+      <span style="opacity:.8;">(ex: name)</span>
+    </div>
+
+    <div class="form-row" style="margin-top: 8px;">
+      <label><strong>Sort direction:</strong></label>
+      <input type="text" name="sortdirection" value="asc" style="min-width: 120px;">
+      <span style="opacity:.8;">(asc/desc)</span>
+    </div>
+
+    <div style="margin-top: 12px;">
+      <button class="button default" type="submit">Rodar Sync GLOBAL</button>
+    </div>
+  </form>
+
+  <hr>
+
+  <h2>Modo B: Sync por SEED (TXT/CSV)</h2>
+  <p>Útil para corrigir ou atualizar cartas específicas sem rodar a base toda.</p>
+
+  <form method="post" enctype="multipart/form-data" style="margin-top: 10px;">
+    {% csrf_token %}
+    <input type="hidden" name="mode" value="SEED">
+
+    <fieldset class="module aligned">
+      <div class="form-row">
+        <label><strong>Arquivo seed (TXT/CSV):</strong></label>
+        <input type="file" name="seed_file" accept=".txt,.csv" required>
+      </div>
+
+      <div class="form-row" style="margin-top: 8px;">
+        <label><strong>Apenas faltantes:</strong></label>
+        <input type="checkbox" name="only_missing">
+        <span style="opacity:.8;">(se marcado, ignora os que já existem no banco)</span>
+      </div>
+
+      <div class="form-row" style="margin-top: 8px;">
+        <label><strong>Delay por request (segundos):</strong></label>
+        <input type="text" name="sleep_s" value="0.35" style="width: 90px;">
+        <span style="opacity:.8;">(protege contra limite da API)</span>
+      </div>
+    </fieldset>
+
+    <div style="margin-top: 12px;">
+      <button class="button default" type="submit">Rodar Sync SEED</button>
+    </div>
+  </form>
+{% endblock %}

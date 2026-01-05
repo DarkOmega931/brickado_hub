@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-4" style="max-width: 900px;">
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h5 mb-0">📥 Importar lista: {{ deck.nome }}</h1>
+    <a href="{% url 'deck_detail' pk=deck.id %}" class="btn btn-outline-secondary btn-sm">← Voltar</a>
+  </div>
+
+  <div class="card bg-dark border-warning-subtle p-3">
+    <p class="text-secondary mb-2">
+      Formato Modelo A (uma linha por carta):
+      <br><code>4 BT4-016 Aldamon</code>
+    </p>
+
+    <form method="post">
+      {% csrf_token %}
+
+      <div class="mb-3">
+        <label class="form-label">Cole a lista aqui</label>
+        <textarea name="decklist" rows="10" class="form-control" placeholder="4 BT4-016 Aldamon&#10;2 BT8-084 MagnaGarurumon&#10;1 BT13-112 Omnimon"></textarea>
+      </div>
+
+      <div class="form-check mb-3">
+        <input class="form-check-input" type="checkbox" name="replace" id="replace">
+        <label class="form-check-label" for="replace">
+          Substituir deck atual (apagar cartas existentes antes de importar)
+        </label>
+      </div>
+
+      <button class="btn btn-warning">Importar</button>
+    </form>
+  </div>
+
+</div>
+{% endblock %}

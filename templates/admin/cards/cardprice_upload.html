@@ -1,0 +1,35 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block content %}
+  <div class="content">
+    <h1>⬆ Upload em lote de preços (CSV)</h1>
+
+    <p>
+      Use este modelo: <strong>cardnumber, price</strong><br>
+      Exemplo:
+      <code>BT4-016,12.90</code>
+    </p>
+
+    <p>
+      <a class="button" href="{% url 'admin:cards_cardprice_download_template' %}">
+        ⬇ Baixar modelo CSV
+      </a>
+    </p>
+
+    <form method="post" enctype="multipart/form-data" style="margin-top: 16px;">
+      {% csrf_token %}
+      <fieldset class="module aligned">
+        <div class="form-row">
+          <label for="id_csv_file">Arquivo CSV:</label>
+          <input type="file" name="csv_file" id="id_csv_file" accept=".csv" required>
+        </div>
+      </fieldset>
+
+      <div class="submit-row">
+        <input type="submit" class="default" value="Processar upload">
+        <a href="../" class="button cancel-link">Cancelar</a>
+      </div>
+    </form>
+  </div>
+{% endblock %}

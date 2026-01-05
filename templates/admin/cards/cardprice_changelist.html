@@ -1,0 +1,20 @@
+{% extends "admin/change_list.html" %}
+{% load i18n %}
+
+{% block object-tools %}
+  <div class="object-tools">
+    <ul class="object-tools">
+      <li>
+        <a href="{% url 'admin:cards_cardprice_download_template' %}" class="button">
+          ⬇ Baixar modelo CSV
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'admin:cards_cardprice_upload_csv' %}" class="button">
+          ⬆ Upload CSV (lote)
+        </a>
+      </li>
+    </ul>
+  </div>
+  {{ block.super }}
+{% endblock %}

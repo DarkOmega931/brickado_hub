@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Meus Pontos · Brickado Hub{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h1 class="page-title">Seus pontos</h1>
+        <p class="page-subtitle">Acompanhe sua jornada na Brickado Store</p>
+    </div>
+    <a href="/" class="btn btn-outline-light btn-sm">
+        ← Home
+    </a>
+</div>
+
+<div class="row g-3">
+    <div class="col-12 col-md-4">
+        <div class="card glass-card h-100">
+            <div class="card-body">
+                <p class="text-muted mb-1">Saldo atual</p>
+                <p class="display-5 fw-bold neon-yellow mb-0">{{ pontos }}</p>
+                <p class="text-muted small mb-2">pontos Brickado</p>
+                <a href="{% url 'reward_list' %}" class="btn btn-warning w-100 mt-2">
+                    🎁 Ver recompensas disponíveis
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-md-8">
+        <div class="card glass-card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h2 class="h6 mb-0">Histórico de pontos</h2>
+            </div>
+            <div class="card-body p-0">
+                {% if eventos %}
+                    <div class="table-responsive">
+                        <table class="table table-dark table-sm mb-0 align-middle brick-table">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Tipo</th>
+                                    <th>Descrição</th>
+                                    <th class="text-end">Pontos</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for ev in eventos %}
+                                    <tr>
+                                        <td>{{ ev.criado_em|date:"d/m/Y H:i" }}</td>
+                                        <td>{{ ev.get_tipo_display }}</td>
+                                        <td>{{ ev.descricao }}</td>
+                                        <td class="text-end {% if ev.pontos >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                            {% if ev.pontos > 0 %}+{% endif %}{{ ev.pontos }}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted p-3 mb-0">
+                        Ainda não há movimentações. Participe de torneios e compras para começar a pontuar ✨
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
