@@ -1,15 +1,9 @@
 # decks/views.py
 import io
-import re
-import time
 from decimal import Decimal
-
-import requests
-from PIL import Image
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.contrib.staticfiles import finders
 from django.db import transaction
 from django.db.models import Q
 from django.http import HttpResponse
@@ -24,6 +18,7 @@ from .rules import (
     compute_current_counts,
     is_egg_card,
 )
+from .export_image import export_deck_image  # geração de imagem do deck
 from cards.models import DigimonCard, CardPrice
 
 
@@ -544,109 +539,8 @@ def deck_export_text(request, pk):
 
 
 # ----------------------------
-# Export IMAGEM (background + cartas)
+# Export IMAGEM (usa export_image.py)
 # ----------------------------
-def _open_background_image() -> Image.Image:
-    """
-    Procura static/decks/deck_bg.png.
-    Se não achar, cria um fundo simples 1600x900 branco.
-    """
-    bg_path = finders.find("decks/deck_bg.png")
-    if bg_path:
-        try:
-            return Image.open(bg_path).convert("RGBA")
-        except Exception:
-            pass
-
-    return Image.new("RGBA", (1600, 900), (255, 255, 255, 255))
-
-
-def _card_image_url(cardnumber: str) -> str:
-    cn = (cardnumber or "").strip()
-    if not cn:
-        return ""
-    # padrão da CDN (ajuste se mudar de origem)
-    return f"https://images.digimoncard.io/images/cards/{cn}.webp"
-
-
-def _download_image(url: str, timeout=20) -> Image.Image | None:
-    if not url:
-        return None
-    try:
-        r = requests.get(url, timeout=timeout)
-        r.raise_for_status()
-        return Image.open(io.BytesIO(r.content)).convert("RGBA")
-    except Exception:
-        return None
-
-
-def export_deck_image(deck: Deck) -> Image.Image:
-    """
-    Gera imagem do deck: background + grid de cartas (repetindo conforme quantidade).
-    Usa deck_bg.png como fundo se existir em static/decks/.
-    """
-    bg = _open_background_image()
-
-    deck_cards = (
-        DeckCard.objects.filter(deck=deck)
-        .select_related("card")
-        .order_by("section", "codigo_carta", "nome_carta", "id")
-    )
-
-    cardnumbers: list[str] = []
-    for dc in deck_cards:
-        qty = int(dc.quantidade or 0)
-        if qty <= 0:
-            continue
-
-        cn = (dc.codigo_carta or "").strip()
-        if not cn and dc.card_id:
-            cn = (dc.card.cardnumber or "").strip()
-
-        if cn:
-            # proteção para não inflar muito a imagem
-            cardnumbers.extend([cn] * min(qty, 20))
-
-    if not cardnumbers:
-        return bg
-
-    # Layout de grid
-    canvas_w, canvas_h = bg.size
-    margin_x, margin_y = 60, 140
-    gap_x, gap_y = 14, 14
-
-    cols = 10
-    card_w = (canvas_w - 2 * margin_x - (cols - 1) * gap_x) // cols
-    card_h = int(card_w * 1.4)  # proporção típica da carta
-
-    x0, y0 = margin_x, margin_y
-
-    for idx, cn in enumerate(cardnumbers):
-        col = idx % cols
-        row = idx // cols
-
-        x = x0 + col * (card_w + gap_x)
-        y = y0 + row * (card_h + gap_y)
-
-        # se estourar verticalmente, para
-        if y + card_h > canvas_h - 40:
-            break
-
-        img = _download_image(_card_image_url(cn))
-        if not img:
-            continue
-
-        img = img.resize((card_w, card_h), Image.Resampling.LANCZOS)
-        bg.alpha_composite(img, (x, y))
-
-        # micro pausa para não martelar a CDN
-        time.sleep(0.03)
-
-    return bg
-
-
-from .export_image import export_deck_image
-
 @login_required
 def deck_export_image(request, pk):
     deck = get_object_or_404(Deck, pk=pk, user=request.user)
@@ -657,5 +551,5 @@ def deck_export_image(request, pk):
     buffer.seek(0)
 
     response = HttpResponse(buffer.getvalue(), content_type="image/png")
-    response["Content-Disposition"] = f'attachment; filename="deck_{deck.id}.png"'
+    response["Content-Disposition"] = f'attachment; filename=\"deck_{deck.id}.png\"'
     return response
