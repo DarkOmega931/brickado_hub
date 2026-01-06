@@ -1,9 +1,16 @@
 # decks/views.py
+import io
 import re
+import time
+import requests
 from decimal import Decimal
 
+from PIL import Image
+
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.contrib.staticfiles import finders
 from django.db import transaction
 from django.db.models import Q
 from django.http import HttpResponse
@@ -23,7 +30,7 @@ from cards.models import DigimonCard, CardPrice
 
 
 # ----------------------------
-# Helpers
+# Helpers (Filtros)
 # ----------------------------
 def _distinct_values(qs, field: str):
     return (
@@ -36,17 +43,9 @@ def _distinct_values(qs, field: str):
 
 
 def _apply_card_filters(base_qs, params):
-    """
-    Filtros avançados compatíveis com o DigimonCard atual.
-    Campos disponíveis no model:
-    - name, cardnumber, card_type, color, level, dp, play_cost
-    - evo_cost_1, evo_color_1
-    - attribute, digitype, rarity, pack
-    - effect, inherit_effect, security_effect (texto)
-    """
     qs = base_qs
 
-    # Busca livre (compatível)
+    # Busca livre
     q = (params.get("q") or "").strip()
     if q:
         qs = qs.filter(
@@ -63,10 +62,9 @@ def _apply_card_filters(base_qs, params):
             | Q(security_effect__icontains=q)
         )
 
-    # Campos “modelo 2” adaptados (sem quebrar)
     name = (params.get("name") or "").strip()
-    type_ = (params.get("type") or "").strip()          # card_type
-    card_id = (params.get("id") or "").strip()          # cardnumber
+    type_ = (params.get("type") or "").strip()
+    card_id = (params.get("id") or "").strip()
     level = (params.get("level") or "").strip()
 
     play_cost_min = (params.get("play_cost_min") or "").strip()
@@ -87,25 +85,18 @@ def _apply_card_filters(base_qs, params):
 
     if name:
         qs = qs.filter(name__icontains=name)
-
     if type_:
         qs = qs.filter(card_type__iexact=type_)
-
     if card_id:
         qs = qs.filter(cardnumber__icontains=card_id)
-
     if color:
         qs = qs.filter(color__icontains=color)
-
     if digi_type:
         qs = qs.filter(digitype__icontains=digi_type)
-
     if attribute:
         qs = qs.filter(attribute__icontains=attribute)
-
     if rarity:
         qs = qs.filter(rarity__icontains=rarity)
-
     if pack:
         qs = qs.filter(pack__icontains=pack)
 
@@ -147,7 +138,7 @@ def _apply_card_filters(base_qs, params):
 
 
 # ----------------------------
-# Views
+# Views principais
 # ----------------------------
 @login_required
 def deck_list(request):
@@ -314,8 +305,8 @@ def deck_add_card(request, pk):
 
         cn = card.cardnumber
 
-        max_by_rule = get_card_limits(cn)   # default 4, exceções do admin
-        max_by_ban = get_ban_limit(cn)      # 0/1/2/...
+        max_by_rule = get_card_limits(cn)
+        max_by_ban = get_ban_limit(cn)
         max_allowed = min(max_by_rule, max_by_ban)
 
         if max_allowed <= 0:
@@ -366,14 +357,12 @@ def deck_remove_card(request, pk, deckcard_id):
     return redirect("deck_detail", pk=deck.id)
 
 
+# ----------------------------
+# Import (Formato oficial)
+# QTD  NOME DA CARTA   CARDNUMBER
+# ----------------------------
 @login_required
 def deck_import(request, pk):
-    """
-    Importa lista no Modelo A:
-    4 BT4-016 Aldamon
-    2 BT8-084 MagnaGarurumon
-    1 BT13-112 Omnimon
-    """
     deck = get_object_or_404(Deck, pk=pk, user=request.user)
 
     if request.method == "POST":
@@ -381,24 +370,39 @@ def deck_import(request, pk):
         replace = request.POST.get("replace") == "on"
 
         if not text:
-            messages.error(request, "Cole a lista do deck no formato: '4 BT4-016 Nome'.")
+            messages.error(
+                request,
+                "Cole a lista no formato: '4 Nome da Carta BT24-012' (qtd, nome, cardnumber).",
+            )
             return redirect("deck_import", pk=deck.id)
 
-        lines = [l.strip() for l in text.splitlines() if l.strip()]
+        lines = [l.rstrip() for l in text.splitlines()]
         parsed = []
-        pattern = re.compile(r"^\s*(\d+)\s+([A-Za-z0-9\-]+)\s*(.*)\s*$")
 
         for line in lines:
-            m = pattern.match(line)
-            if not m:
+            line = (line or "").strip()
+            if not line:
                 continue
-            qty = int(m.group(1))
-            cardnumber = m.group(2).strip()
-            name = (m.group(3) or "").strip()
-            parsed.append((qty, cardnumber, name))
+            if line.startswith("//"):
+                continue  # ignora header
+
+            parts = line.split()
+            if len(parts) < 3:
+                continue
+
+            try:
+                qty = int(parts[0])
+            except ValueError:
+                continue
+
+            cardnumber = parts[-1].strip()
+            name = " ".join(parts[1:-1]).strip()
+
+            if qty > 0 and cardnumber:
+                parsed.append((qty, cardnumber, name))
 
         if not parsed:
-            messages.error(request, "Não consegui ler nenhuma linha válida. Use: 4 BT4-016 Aldamon")
+            messages.error(request, "Não consegui ler nenhuma linha válida. Use: 4 Nome BT24-012")
             return redirect("deck_import", pk=deck.id)
 
         with transaction.atomic():
@@ -409,7 +413,7 @@ def deck_import(request, pk):
             main_total, egg_total, cm, ce = compute_current_counts(deck_cards)
 
             for qty, cardnumber, name in parsed:
-                digicard = DigimonCard.objects.filter(cardnumber=cardnumber).first()
+                digicard = DigimonCard.objects.filter(cardnumber__iexact=cardnumber).first()
                 section = DeckCard.SECTION_EGG if (digicard and is_egg_card(digicard)) else DeckCard.SECTION_MAIN
 
                 max_allowed = min(get_card_limits(cardnumber), get_ban_limit(cardnumber))
@@ -430,10 +434,12 @@ def deck_import(request, pk):
                     messages.error(request, f"Main deck max {MAIN_LIMIT}. Import cancelado.")
                     return redirect("deck_import", pk=deck.id)
 
-                obj = DeckCard.objects.filter(deck=deck, section=section, codigo_carta=cardnumber).first()
+                obj = DeckCard.objects.filter(deck=deck, section=section, codigo_carta__iexact=cardnumber).first()
+                final_name = name or (digicard.name if digicard else "")
+
                 if obj:
                     obj.quantidade = qty
-                    obj.nome_carta = name or (digicard.name if digicard else obj.nome_carta)
+                    obj.nome_carta = final_name or obj.nome_carta
                     obj.card = digicard or obj.card
                     obj.save()
                 else:
@@ -442,7 +448,7 @@ def deck_import(request, pk):
                         section=section,
                         quantidade=qty,
                         codigo_carta=cardnumber,
-                        nome_carta=name or (digicard.name if digicard else ""),
+                        nome_carta=final_name,
                         card=digicard,
                     )
 
@@ -459,32 +465,159 @@ def deck_import(request, pk):
     return render(request, "decks/deck_import.html", {"deck": deck})
 
 
+# ----------------------------
+# Export TXT (Formato oficial)
+# QTD  NOME DA CARTA   CARDNUMBER
+# ----------------------------
 @login_required
-def deck_export(request, pk):
+def deck_export_text(request, pk):
     deck = get_object_or_404(Deck, pk=pk, user=request.user)
     deck_cards = (
         DeckCard.objects.filter(deck=deck)
         .select_related("card")
-        .order_by("section", "codigo_carta", "nome_carta")
+        .order_by("section", "nome_carta", "codigo_carta")
     )
 
-    lines = []
+    rows = []
     for dc in deck_cards:
-        qty = dc.quantidade or 0
+        qty = int(dc.quantidade or 0)
         cn = (dc.codigo_carta or "").strip()
         name = (dc.nome_carta or "").strip()
 
-        if not cn and dc.card_id:
-            cn = dc.card.cardnumber
-        if not name and dc.card_id:
-            name = dc.card.name
+        if dc.card_id:
+            cn = cn or (dc.card.cardnumber or "")
+            name = name or (dc.card.name or "")
 
         if qty > 0 and cn:
-            lines.append(f"{qty} {cn} {name}".strip())
+            rows.append((qty, name, cn))
 
-    content = "\n".join(lines).strip() + "\n"
-    filename = f"{deck.nome}".replace(" ", "_").lower() + "_export.txt"
+    if not rows:
+        content = "// Digimon DeckList\n\n"
+    else:
+        max_name = max(len(n or "") for _, n, _ in rows)
+        lines = [f"{qty} {name:<{max_name}}  {cn}" for qty, name, cn in rows]
+        content = "// Digimon DeckList\n\n" + "\n".join(lines) + "\n"
 
+    filename = f"{deck.nome}".replace(" ", "_").lower() + "_decklist.txt"
     response = HttpResponse(content, content_type="text/plain; charset=utf-8")
     response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return response
+
+
+# ----------------------------
+# Export IMAGEM (background + cartas)
+# ----------------------------
+def _open_background_image():
+    """
+    Procura static/decks/deck_bg.png.
+    Se não achar, cria um fundo simples.
+    """
+    bg_path = finders.find("decks/deck_bg.png")
+    if bg_path:
+        try:
+            return Image.open(bg_path).convert("RGBA")
+        except Exception:
+            pass
+
+    # fallback: fundo branco 1600x900
+    return Image.new("RGBA", (1600, 900), (255, 255, 255, 255))
+
+
+def _card_image_url(cardnumber: str) -> str:
+    cn = (cardnumber or "").strip()
+    if not cn:
+        return ""
+    # padrão da CDN
+    return f"https://images.digimoncard.io/images/cards/{cn}.webp"
+
+
+def _download_image(url: str, timeout=20) -> Image.Image | None:
+    if not url:
+        return None
+    try:
+        r = requests.get(url, timeout=timeout)
+        r.raise_for_status()
+        return Image.open(io.BytesIO(r.content)).convert("RGBA")
+    except Exception:
+        return None
+
+
+def export_deck_image(deck: Deck) -> Image.Image:
+    """
+    Gera imagem do deck: background + grid de cartas (repetindo conforme quantidade).
+    """
+    bg = _open_background_image()
+
+    # coleta cards repetidos
+    deck_cards = (
+        DeckCard.objects.filter(deck=deck)
+        .select_related("card")
+        .order_by("section", "codigo_carta", "nome_carta", "id")
+    )
+
+    cardnumbers = []
+    for dc in deck_cards:
+        qty = int(dc.quantidade or 0)
+        if qty <= 0:
+            continue
+
+        cn = (dc.codigo_carta or "").strip()
+        if not cn and dc.card_id:
+            cn = (dc.card.cardnumber or "").strip()
+
+        if cn:
+            cardnumbers.extend([cn] * min(qty, 20))  # trava segurança
+
+    if not cardnumbers:
+        return bg
+
+    # layout grid
+    # (ajuste fino depois): margens e tamanho das cartas
+    canvas_w, canvas_h = bg.size
+    margin_x, margin_y = 60, 140
+    gap_x, gap_y = 14, 14
+
+    cols = 10  # ajuste para bater com seu exemplo
+    card_w = (canvas_w - 2 * margin_x - (cols - 1) * gap_x) // cols
+    # proporção típica carta digimon
+    card_h = int(card_w * 1.4)
+
+    x0, y0 = margin_x, margin_y
+
+    for idx, cn in enumerate(cardnumbers):
+        col = idx % cols
+        row = idx // cols
+
+        x = x0 + col * (card_w + gap_x)
+        y = y0 + row * (card_h + gap_y)
+
+        # se estourar a tela, para
+        if y + card_h > canvas_h - 40:
+            break
+
+        img = _download_image(_card_image_url(cn))
+        if not img:
+            continue
+
+        img = img.resize((card_w, card_h), Image.Resampling.LANCZOS)
+        bg.alpha_composite(img, (x, y))
+
+        # micro-sleep para não martelar a CDN/API
+        time.sleep(0.03)
+
+    return bg
+
+
+@login_required
+def deck_export_image(request, pk):
+    deck = get_object_or_404(Deck, pk=pk, user=request.user)
+
+    image = export_deck_image(deck)
+
+    buffer = io.BytesIO()
+    image.save(buffer, format="PNG")
+    buffer.seek(0)
+
+    response = HttpResponse(buffer.getvalue(), content_type="image/png")
+    response["Content-Disposition"] = f'attachment; filename="deck_{deck.id}.png"'
     return response

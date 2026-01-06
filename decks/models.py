@@ -1,9 +1,35 @@
-# decks/models.py
+from __future__ import annotations
+
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils.text import slugify
+
 from cards.models import DigimonCard
 
 
+# =========================
+# Archetype (novo modelo)
+# =========================
+class Archetype(models.Model):
+    name = models.CharField(max_length=120, unique=True, db_index=True)
+    slug = models.SlugField(max_length=140, unique=True, blank=True)
+
+    class Meta:
+        ordering = ("name",)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            base = slugify(self.name)
+            self.slug = base[:140] if base else slugify(f"archetype-{self.pk}")
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.name
+
+
+# =========================
+# Deck
+# =========================
 class Deck(models.Model):
     JOGO_CHOICES = [
         ("DIGIMON", "Digimon"),
@@ -13,8 +39,14 @@ class Deck(models.Model):
     nome = models.CharField(max_length=100)
     jogo = models.CharField(max_length=20, choices=JOGO_CHOICES, default="DIGIMON")
 
-    # usado para sugestão / agrupamento
-    arquetipo = models.CharField(max_length=120, blank=True, default="")
+    # 🔁 substitui o antigo CharField
+    archetype = models.ForeignKey(
+        Archetype,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="decks",
+    )
 
     descricao = models.TextField(blank=True, default="")
     publico = models.BooleanField(default=False)
@@ -29,6 +61,9 @@ class Deck(models.Model):
         return f"{self.nome} ({self.jogo})"
 
 
+# =========================
+# DeckCard
+# =========================
 class DeckCard(models.Model):
     SECTION_MAIN = "MAIN"
     SECTION_EGG = "EGG"
@@ -38,14 +73,16 @@ class DeckCard(models.Model):
         (SECTION_EGG, "Digi-Egg Deck"),
     ]
 
-    deck = models.ForeignKey(Deck, on_delete=models.CASCADE, related_name="cartas")
+    deck = models.ForeignKey(
+        Deck,
+        on_delete=models.CASCADE,
+        related_name="cartas",
+    )
 
-    # compatibilidade com seu fluxo de import/export
     nome_carta = models.CharField(max_length=255, blank=True, default="")
     codigo_carta = models.CharField(max_length=50, blank=True, default="")
     quantidade = models.PositiveIntegerField(default=1)
 
-    # separa deck principal (50) e egg deck (5)
     section = models.CharField(
         max_length=10,
         choices=SECTION_CHOICES,
@@ -53,7 +90,6 @@ class DeckCard(models.Model):
         db_index=True,
     )
 
-    # link opcional com a carta em cache da API
     card = models.ForeignKey(
         DigimonCard,
         on_delete=models.SET_NULL,

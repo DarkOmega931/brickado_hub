@@ -13,4 +13,7 @@ urlpatterns = [
     path("<int:pk>/importar/", views.deck_import, name="deck_import"),
     path("<int:pk>/export/", views.deck_export, name="deck_export"),  # ✅ novo
     path("<int:pk>/deletar/", views.deck_delete, name="deck_delete"),
+    
+    path("decks/<int:pk>/export/txt/", views.deck_export_text, name="deck_export_text"),
+    path("decks/<int:pk>/export/image/", views.deck_export_image, name="deck_export_image"),
 ]
