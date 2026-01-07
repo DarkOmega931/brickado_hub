@@ -7,7 +7,7 @@ urlpatterns = [
     path("", views.deck_list, name="deck_list"),
     path("create/", views.deck_create, name="deck_create"),
 
-    # Detalhe / excluir
+    # Detalhe / excluir deck
     path("<int:pk>/", views.deck_detail, name="deck_detail"),
     path("<int:pk>/delete/", views.deck_delete, name="deck_delete"),
 
@@ -22,11 +22,10 @@ urlpatterns = [
     # Importar decklist em texto
     path("<int:pk>/import/", views.deck_import, name="deck_import"),
 
-    # ✅ Exportar deck em TEXTO (formato oficial // Digimon DeckList)
-    # Ex: 1 Elizamon BT24-008
+    # Exportar deck em TEXTO (// Digimon DeckList)
     path("<int:pk>/export/", views.deck_export_text, name="deck_export"),
 
-    # ✅ Exportar deck em IMAGEM (background + cartas)
+    # Exportar deck em IMAGEM (background + cartas)
     path(
         "<int:pk>/export/image/",
         views.deck_export_image,
