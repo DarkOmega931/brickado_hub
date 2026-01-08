@@ -2,12 +2,14 @@
 from django.urls import path
 from . import views
 
+app_name = "decks"
+
 urlpatterns = [
     # Lista e criação de decks
     path("", views.deck_list, name="deck_list"),
     path("create/", views.deck_create, name="deck_create"),
 
-    # Detalhe / excluir deck
+    # Detalhe / excluir
     path("<int:pk>/", views.deck_detail, name="deck_detail"),
     path("<int:pk>/delete/", views.deck_delete, name="deck_delete"),
 
@@ -22,10 +24,10 @@ urlpatterns = [
     # Importar decklist em texto
     path("<int:pk>/import/", views.deck_import, name="deck_import"),
 
-    # Exportar deck em TEXTO (// Digimon DeckList)
+    # Exportar deck em TEXTO
     path("<int:pk>/export/", views.deck_export_text, name="deck_export"),
 
-    # Exportar deck em IMAGEM (background + cartas)
+    # Exportar deck em IMAGEM
     path(
         "<int:pk>/export/image/",
         views.deck_export_image,

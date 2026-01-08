@@ -7,7 +7,11 @@
 <div class="page-header d-flex justify-content-between align-items-center mb-3">
     <div>
         <h1 class="page-title">{{ card.name }}</h1>
-        <p class="page-subtitle">{{ card.cardnumber }} • {{ card.color }} • {{ card.level }}</p>
+        <p class="page-subtitle">
+            {{ card.cardnumber }} • 
+            {{ card.color|default:"—" }} • 
+            {{ card.level|default:"—" }}
+        </p>
     </div>
     <a href="javascript:history.back()" class="btn btn-outline-light btn-sm">← Voltar</a>
 </div>
@@ -30,6 +34,7 @@
             <div class="card-body">
                 <h2 class="h6 mb-3">Detalhes da carta</h2>
                 <dl class="row small mb-0">
+
                     <dt class="col-sm-4 text-muted">Nome</dt>
                     <dd class="col-sm-8">{{ card.name }}</dd>
 
@@ -37,13 +42,14 @@
                     <dd class="col-sm-8">{{ card.cardnumber }}</dd>
 
                     <dt class="col-sm-4 text-muted">Tipo</dt>
-                    <dd class="col-sm-8">{{ card.type }}</dd>
+                    <dd class="col-sm-8">{{ card.card_type|default:"—" }}</dd>
 
                     <dt class="col-sm-4 text-muted">Atributo</dt>
-                    <dd class="col-sm-8">{{ card.attribute }}</dd>
+                    <dd class="col-sm-8">{{ card.attribute|default:"—" }}</dd>
 
                     <dt class="col-sm-4 text-muted">Digi-type</dt>
-                    <dd class="col-sm-8">{{ card.digitype }}</dd>
+                    <dd class="col-sm-8">{{ card.digitype|default:"—" }}</dd>
+
                 </dl>
             </div>
         </div>

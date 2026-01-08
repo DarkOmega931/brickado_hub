@@ -1,4 +1,3 @@
-# decks/views.py
 import io
 from decimal import Decimal
 
@@ -9,6 +8,8 @@ from django.db.models import Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
+from cards.models import DigimonCard, CardPrice
+
 from .models import Deck, DeckCard
 from .rules import (
     MAIN_LIMIT,
@@ -18,8 +19,7 @@ from .rules import (
     compute_current_counts,
     is_egg_card,
 )
-from .export_image import export_deck_image  # geração de imagem do deck
-from cards.models import DigimonCard, CardPrice
+from .export_image import export_deck_image
 
 
 # ----------------------------
@@ -153,7 +153,9 @@ def deck_create(request):
     if request.method == "POST":
         nome = (request.POST.get("nome") or "").strip()
         jogo = (request.POST.get("jogo") or "DIGIMON").strip()
-        arquetipo = (request.POST.get("arquetipo") or "").strip()
+
+        # pode vir nome de arquétipo livre ou o ID de Archetype, dependendo do form
+        arquetipo_nome = (request.POST.get("arquetipo_nome") or "").strip()
         descricao = (request.POST.get("descricao") or "").strip()
         publico = request.POST.get("publico") == "on"
 
@@ -165,12 +167,12 @@ def deck_create(request):
             user=request.user,
             nome=nome,
             jogo=jogo,
-            arquetipo=arquetipo,
+            arquetipo_nome=arquetipo_nome,
             descricao=descricao,
             publico=publico,
         )
         messages.success(request, "Deck criado!")
-        return redirect("deck_detail", pk=deck.id)
+        return redirect("decks:deck_detail", pk=deck.id)
 
     return render(request, "decks/deck_create.html", {})
 
@@ -181,7 +183,7 @@ def deck_delete(request, pk):
     if request.method == "POST":
         deck.delete()
         messages.success(request, "Deck deletado.")
-        return redirect("deck_list")
+        return redirect("decks:deck_list")
     return render(request, "decks/deck_confirm_delete.html", {"deck": deck})
 
 
@@ -287,7 +289,7 @@ def deck_detail(request, pk):
 def deck_add_card(request, pk):
     deck = get_object_or_404(Deck, pk=pk, user=request.user)
     if request.method != "POST":
-        return redirect("deck_detail", pk=deck.id)
+        return redirect("decks:deck_detail", pk=deck.id)
 
     qty_raw = (request.POST.get("qty") or "1").strip()
     card_id = request.POST.get("card_id")
@@ -313,7 +315,7 @@ def deck_add_card(request, pk):
 
         if max_allowed <= 0:
             messages.error(request, f"{cn} está proibida pela banlist.")
-            return redirect("deck_detail", pk=deck.id)
+            return redirect("decks:deck_detail", pk=deck.id)
 
         current_copies = ce.get(cn, 0) if section == DeckCard.SECTION_EGG else cm.get(cn, 0)
         if current_copies + qty > max_allowed:
@@ -321,15 +323,15 @@ def deck_add_card(request, pk):
                 request,
                 f"Limite excedido: {cn} permite no máximo {max_allowed} cópia(s)."
             )
-            return redirect("deck_detail", pk=deck.id)
+            return redirect("decks:deck_detail", pk=deck.id)
 
         if section == DeckCard.SECTION_EGG and egg_total + qty > EGG_LIMIT:
             messages.error(request, f"Digi-Egg deck só pode ter {EGG_LIMIT} cartas no total.")
-            return redirect("deck_detail", pk=deck.id)
+            return redirect("decks:deck_detail", pk=deck.id)
 
         if section == DeckCard.SECTION_MAIN and main_total + qty > MAIN_LIMIT:
             messages.error(request, f"Main deck só pode ter {MAIN_LIMIT} cartas no total.")
-            return redirect("deck_detail", pk=deck.id)
+            return redirect("decks:deck_detail", pk=deck.id)
 
         existing = DeckCard.objects.filter(
             deck=deck,
@@ -355,7 +357,7 @@ def deck_add_card(request, pk):
             )
 
     messages.success(request, f"Adicionado: {qty}x {card.cardnumber} {card.name} ({section})")
-    return redirect("deck_detail", pk=deck.id)
+    return redirect("decks:deck_detail", pk=deck.id)
 
 
 @login_required
@@ -364,7 +366,7 @@ def deck_remove_card(request, pk, deckcard_id):
     dc = get_object_or_404(DeckCard, pk=deckcard_id, deck=deck)
     dc.delete()
     messages.info(request, "Carta removida do deck.")
-    return redirect("deck_detail", pk=deck.id)
+    return redirect("decks:deck_detail", pk=deck.id)
 
 
 # ----------------------------
@@ -388,7 +390,7 @@ def deck_import(request, pk):
                 request,
                 "Cole a lista no formato: '4 Nome da Carta BT24-012' (qtd, nome, cardnumber).",
             )
-            return redirect("deck_import", pk=deck.id)
+            return redirect("decks:deck_import", pk=deck.id)
 
         lines = [l.rstrip() for l in text.splitlines()]
         parsed = []
@@ -418,7 +420,7 @@ def deck_import(request, pk):
 
         if not parsed:
             messages.error(request, "Não consegui ler nenhuma linha válida. Use: 4 Nome BT24-012")
-            return redirect("deck_import", pk=deck.id)
+            return redirect("decks:deck_import", pk=deck.id)
 
         with transaction.atomic():
             if replace:
@@ -441,7 +443,7 @@ def deck_import(request, pk):
                         request,
                         f"{cardnumber} está proibida (banlist). Import cancelado."
                     )
-                    return redirect("deck_import", pk=deck.id)
+                    return redirect("decks:deck_import", pk=deck.id)
 
                 current_copies = ce.get(cardnumber, 0) if section == DeckCard.SECTION_EGG else cm.get(cardnumber, 0)
                 if current_copies + qty > max_allowed:
@@ -449,21 +451,21 @@ def deck_import(request, pk):
                         request,
                         f"Limite excedido: {cardnumber} max {max_allowed}. Import cancelado."
                     )
-                    return redirect("deck_import", pk=deck.id)
+                    return redirect("decks:deck_import", pk=deck.id)
 
                 if section == DeckCard.SECTION_EGG and egg_total + qty > EGG_LIMIT:
                     messages.error(
                         request,
                         f"Digi-Egg deck max {EGG_LIMIT}. Import cancelado."
                     )
-                    return redirect("deck_import", pk=deck.id)
+                    return redirect("decks:deck_import", pk=deck.id)
 
                 if section == DeckCard.SECTION_MAIN and main_total + qty > MAIN_LIMIT:
                     messages.error(
                         request,
                         f"Main deck max {MAIN_LIMIT}. Import cancelado."
                     )
-                    return redirect("deck_import", pk=deck.id)
+                    return redirect("decks:deck_import", pk=deck.id)
 
                 obj = DeckCard.objects.filter(
                     deck=deck,
@@ -495,7 +497,7 @@ def deck_import(request, pk):
                     cm[cardnumber] = cm.get(cardnumber, 0) + qty
 
         messages.success(request, f"Importação concluída: {len(parsed)} linhas processadas.")
-        return redirect("deck_detail", pk=deck.id)
+        return redirect("decks:deck_detail", pk=deck.id)
 
     return render(request, "decks/deck_import.html", {"deck": deck})
 
@@ -539,11 +541,12 @@ def deck_export_text(request, pk):
 
 
 # ----------------------------
-# Export IMAGEM (usa export_image.py)
+# Export IMAGEM (background + cartas)
 # ----------------------------
 @login_required
 def deck_export_image(request, pk):
     deck = get_object_or_404(Deck, pk=pk, user=request.user)
+
     image = export_deck_image(deck)
 
     buffer = io.BytesIO()
@@ -551,5 +554,5 @@ def deck_export_image(request, pk):
     buffer.seek(0)
 
     response = HttpResponse(buffer.getvalue(), content_type="image/png")
-    response["Content-Disposition"] = f'attachment; filename=\"deck_{deck.id}.png\"'
+    response["Content-Disposition"] = f'attachment; filename="deck_{deck.id}.png"'
     return response

@@ -1,14 +1,24 @@
 {% extends "base.html" %}
+
+{% block title %}Criar conta • Brickado Hub{% endblock %}
+
 {% block content %}
+<div class="auth-page">
   <h1>Criar conta</h1>
 
-  <form method="post">
+  <form method="post" novalidate>
     {% csrf_token %}
+    {{ form.non_field_errors }}
+
     {{ form.as_p }}
-    <button type="submit">Cadastrar</button>
+
+    <button type="submit" class="btn btn-primary">Criar conta</button>
   </form>
 
-  <p style="margin-top: 12px;">
-    Já tem conta? <a href="{% url 'login' %}">Entrar</a>
-  </p>
+  <div class="auth-links">
+    <p>Já tem conta?
+      <a href="{% url 'login' %}">Fazer login</a>
+    </p>
+  </div>
+</div>
 {% endblock %}

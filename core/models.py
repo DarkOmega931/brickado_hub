@@ -4,8 +4,8 @@ from django.contrib.auth.models import User
 
 def avatar_upload_path(instance, filename):
     """
-    Usado pelas migrations antigas e pelo campo avatar.
-    Gera um caminho do tipo: avatars/user_1/minha_foto.png
+    Caminho para upload de avatar do usuário.
+    Ex: avatars/user_1/minha_foto.png
     """
     return f"avatars/user_{instance.user_id}/{filename}"
 
@@ -20,7 +20,6 @@ class UserProfile(models.Model):
     phone = models.CharField("Telefone / WhatsApp", max_length=30, blank=True)
     nickname = models.CharField("Nick de jogador", max_length=60, blank=True)
 
-    # campo que as migrations antigas provavelmente já estavam usando
     avatar = models.ImageField(
         "Avatar",
         upload_to=avatar_upload_path,
@@ -33,5 +32,5 @@ class UserProfile(models.Model):
         default=True,
     )
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.full_name or self.user.username

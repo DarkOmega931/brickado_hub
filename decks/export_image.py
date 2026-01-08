@@ -1,8 +1,6 @@
-# decks/export_image.py
-
 import io
-import math
-from typing import Optional
+import time
+from typing import List, Optional
 
 import requests
 from PIL import Image
@@ -10,49 +8,19 @@ from django.contrib.staticfiles import finders
 
 from .models import Deck, DeckCard
 
-# =========================
-# CONFIGURAÇÕES VISUAIS
-# =========================
 
-CARD_WIDTH = 223
-CARD_HEIGHT = 311
-CARD_GAP_X = 14
-CARD_GAP_Y = 18
-
+CARD_GRID_COLUMNS = 10
 MARGIN_X = 60
-MARGIN_Y = 80
+MARGIN_Y = 140
+GAP_X = 14
+GAP_Y = 14
+CARD_ASPECT = 1.4  # altura ~ 1.4x largura
 
-CARDS_PER_ROW = 10  # número de cartas por linha
 
-
-# =========================
-# FUNÇÕES AUXILIARES
-# =========================
-
-def fetch_card_image(cardnumber: str) -> Optional[Image.Image]:
+def _open_background_image() -> Image.Image:
     """
-    Baixa imagem da carta via CDN Digimon.
-    Retorna um Image ou None se falhar.
-    """
-    cardnumber = (cardnumber or "").strip()
-    if not cardnumber:
-        return None
-
-    url = f"https://images.digimoncard.io/images/cards/{cardnumber}.webp"
-    try:
-        resp = requests.get(url, timeout=10)
-        resp.raise_for_status()
-        img = Image.open(io.BytesIO(resp.content)).convert("RGBA")
-        return img.resize((CARD_WIDTH, CARD_HEIGHT), Image.Resampling.LANCZOS)
-    except Exception:
-        # Se der erro, devolve None e a carta é ignorada silenciosamente
-        return None
-
-
-def load_background() -> Image.Image:
-    """
-    Tenta carregar um background em static/decks/deck_bg.png.
-    Se não existir ou der erro, cria um fundo simples.
+    Procura static/decks/deck_bg.png.
+    Se não achar, cria um fundo simples 1600x900 branco.
     """
     bg_path = finders.find("decks/deck_bg.png")
     if bg_path:
@@ -61,94 +29,86 @@ def load_background() -> Image.Image:
         except Exception:
             pass
 
-    # fallback: fundo escuro simples 1920 x 1080
-    return Image.new("RGBA", (1920, 1080), (10, 10, 10, 255))
+    return Image.new("RGBA", (1600, 900), (255, 255, 255, 255))
 
 
-# =========================
-# EXPORTAÇÃO PRINCIPAL
-# =========================
+def _card_image_url(cardnumber: str) -> str:
+    cn = (cardnumber or "").strip()
+    if not cn:
+        return ""
+    # padrão da CDN do Digimon Card Game
+    return f"https://images.digimoncard.io/images/cards/{cn}.webp"
+
+
+def _download_card_image(url: str, timeout: int = 20) -> Optional[Image.Image]:
+    if not url:
+        return None
+    try:
+        resp = requests.get(url, timeout=timeout)
+        resp.raise_for_status()
+        return Image.open(io.BytesIO(resp.content)).convert("RGBA")
+    except Exception:
+        return None
+
 
 def export_deck_image(deck: Deck) -> Image.Image:
     """
-    Gera a imagem final do deck:
-    - Usa o background padrão
-    - Organiza as cartas em grid
-    - Repete a imagem da carta conforme a quantidade
+    Gera imagem do deck: background + grid de cartas (repetindo conforme quantidade).
+    Usa deck_bg.png como fundo se existir em static/decks/.
     """
-    bg = load_background()
-    bg_w, bg_h = bg.size
-
-    # Monta lista expandida de cardnumbers baseado em DeckCard
-    expanded_cards: list[str] = []
+    bg = _open_background_image()
 
     deck_cards = (
         DeckCard.objects.filter(deck=deck)
-        .order_by("section", "codigo_carta", "id")
+        .select_related("card")
+        .order_by("section", "codigo_carta", "nome_carta", "id")
     )
 
-    for item in deck_cards:
-        qty = int(item.quantidade or 0)
+    cardnumbers: List[str] = []
+    for dc in deck_cards:
+        qty = int(dc.quantidade or 0)
         if qty <= 0:
             continue
 
-        cn = (item.codigo_carta or "").strip()
-        if not cn and item.card_id:
-            cn = (item.card.cardnumber or "").strip()
+        cn = (dc.codigo_carta or "").strip()
+        if not cn and dc.card_id:
+            cn = (dc.card.cardnumber or "").strip()
 
-        if not cn:
-            continue
+        if cn:
+            # proteção para não inflar muito a imagem
+            cardnumbers.extend([cn] * min(qty, 20))
 
-        # Repete o cardnumber conforme quantidade
-        expanded_cards.extend([cn.upper()] * qty)
-
-    if not expanded_cards:
-        # Se deck estiver vazio, só devolve o background mesmo
+    if not cardnumbers:
         return bg
 
-    total_cards = len(expanded_cards)
-    rows = math.ceil(total_cards / CARDS_PER_ROW)
+    # Layout de grid
+    canvas_w, canvas_h = bg.size
+    cols = CARD_GRID_COLUMNS
 
-    # Tamanho final da carta dentro do canvas
-    card_w = CARD_WIDTH
-    card_h = CARD_HEIGHT
+    card_w = (canvas_w - 2 * MARGIN_X - (cols - 1) * GAP_X) // cols
+    card_h = int(card_w * CARD_ASPECT)
 
-    # Calcula altura necessária
-    needed_h = (
-        MARGIN_Y * 2
-        + rows * card_h
-        + (rows - 1) * CARD_GAP_Y
-    )
+    x0, y0 = MARGIN_X, MARGIN_Y
 
-    # Ajusta altura do background se precisar
-    if needed_h > bg_h:
-        new_h = int(needed_h)
-        new_bg = Image.new("RGBA", (bg_w, new_h), (10, 10, 10, 255))
-        new_bg.paste(bg, (0, 0))
-        bg = new_bg
-        bg_w, bg_h = bg.size
+    for idx, cn in enumerate(cardnumbers):
+        col = idx % cols
+        row = idx // cols
 
-    canvas = bg.copy()
+        x = x0 + col * (card_w + GAP_X)
+        y = y0 + row * (card_h + GAP_Y)
 
-    x = MARGIN_X
-    y = MARGIN_Y
-
-    for idx, cardnumber in enumerate(expanded_cards):
-        card_img = fetch_card_image(cardnumber)
-        if card_img is None:
-            continue
-
-        canvas.alpha_composite(card_img, (x, y))
-
-        x += card_w + CARD_GAP_X
-
-        # Quebra de linha
-        if (idx + 1) % CARDS_PER_ROW == 0:
-            x = MARGIN_X
-            y += card_h + CARD_GAP_Y
-
-        # Se passar muito do fundo, para (segurança extra)
-        if y + card_h > bg_h - MARGIN_Y:
+        # se estourar verticalmente, para
+        if y + card_h > canvas_h - 40:
             break
 
-    return canvas
+        img = _download_card_image(_card_image_url(cn))
+        if not img:
+            continue
+
+        img = img.resize((card_w, card_h), Image.Resampling.LANCZOS)
+        bg.alpha_composite(img, (x, y))
+
+        # micro pausa para não martelar a CDN
+        time.sleep(0.03)
+
+    return bg

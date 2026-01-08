@@ -1,11 +1,28 @@
+import os
 from pathlib import Path
+import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = "dev-secret-key-change-me"
-DEBUG = True  # default local
-ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
+# =========================
+# Configurações básicas
+# =========================
+SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key-change-me")
+DEBUG = os.getenv("DEBUG", "1") == "1"
 
+def _split_env_list(name: str, default: str = ""):
+    value = os.getenv(name, default)
+    if not value:
+        return []
+    return [item.strip() for item in value.split(",") if item.strip()]
+
+if DEBUG:
+    ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
+else:
+    ALLOWED_HOSTS = _split_env_list("ALLOWED_HOSTS")
+    if not ALLOWED_HOSTS:
+        # ajuste para o domínio real do Render, se necessário
+        ALLOWED_HOSTS = ["brickado-hub.onrender.com"]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -14,6 +31,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    # apps do projeto
     "core",
     "loyalty",
     "news",
@@ -52,21 +70,40 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "brickado.wsgi.application"
+ASGI_APPLICATION = "brickado.asgi.application"
 
+# =========================
+# Banco de dados
+# =========================
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
+    "default": dj_database_url.config(
+        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+        conn_max_age=600,
+    )
 }
-
-AUTH_PASSWORD_VALIDATORS = []
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
+    },
+]
 
 LANGUAGE_CODE = "pt-br"
 TIME_ZONE = "America/Sao_Paulo"
 USE_I18N = True
 USE_TZ = True
 
+# =========================
+# Arquivos estáticos
+# =========================
 STATIC_URL = "/static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
@@ -76,35 +113,19 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
 LOGIN_URL = "/accounts/login/"
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"
 
-import os
-
-DEBUG = os.getenv("DEBUG", "0") == "1"
-SECRET_KEY = os.getenv("SECRET_KEY", SECRET_KEY)
-
-def _split_env_list(name: str) -> list[str]:
-    raw = os.getenv(name, "")
-    items = [x.strip() for x in raw.split(",") if x.strip()]
-    return items
-
-DEBUG = os.getenv("DEBUG", "0") == "1"
-SECRET_KEY = os.getenv("SECRET_KEY", SECRET_KEY)
-
-# Hosts
+# =========================
+# CSRF / Segurança
+# =========================
 if DEBUG:
-    ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
-else:
-    ALLOWED_HOSTS = _split_env_list("ALLOWED_HOSTS")
-    if not ALLOWED_HOSTS:
-        # fallback pra não quebrar deploy (ajuste pro seu domínio real)
-        ALLOWED_HOSTS = ["brickado-hub.onrender.com"]
-
-# CSRF Trusted Origins (tem que ter http/https)
-if DEBUG:
-    CSRF_TRUSTED_ORIGINS = ["http://127.0.0.1:8000", "http://localhost:8000"]
+    CSRF_TRUSTED_ORIGINS = [
+        "http://127.0.0.1:8000",
+        "http://localhost:8000",
+    ]
 else:
     CSRF_TRUSTED_ORIGINS = _split_env_list("CSRF_TRUSTED_ORIGINS")
     if not CSRF_TRUSTED_ORIGINS:
