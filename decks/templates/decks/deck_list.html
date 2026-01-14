@@ -6,7 +6,7 @@
     <h1 class="h4 mb-0">🎴 Meus Decks</h1>
     <div class="d-flex gap-2">
       <a href="/" class="btn btn-outline-secondary btn-sm">← Home</a>
-      <a href="{% url 'deck_create' %}" class="btn btn-warning btn-sm">+ Criar novo deck</a>
+      <a href="{% url 'decks:deck_create' %}" class="btn btn-warning btn-sm">+ Criar novo deck</a>
     </div>
   </div>
 
@@ -15,17 +15,16 @@
       {% for d in decks %}
         <div class="list-group-item d-flex justify-content-between align-items-center">
           <div>
-            <a href="{% url 'deck_detail' pk=d.id %}" class="text-decoration-none text-light">
+            <a href="{% url 'decks:deck_detail' pk=d.id %}" class="text-decoration-none text-light">
               <strong>{{ d.nome }}</strong>
             </a>
             <div class="small text-secondary">
               {{ d.get_jogo_display }}{% if d.arquetipo %} • {{ d.arquetipo }}{% endif %} • {{ d.criado_em|date:"d/m/Y" }}
             </div>
           </div>
-
           <div class="d-flex gap-2">
-            <a href="{% url 'deck_detail' pk=d.id %}" class="btn btn-outline-light btn-sm">Abrir</a>
-            <a href="{% url 'deck_delete' pk=d.id %}" class="btn btn-outline-danger btn-sm">Deletar</a>
+            <a href="{% url 'decks:deck_detail' pk=d.id %}" class="btn btn-outline-light btn-sm">Abrir</a>
+            <a href="{% url 'decks:deck_delete' pk=d.id %}" class="btn btn-outline-danger btn-sm">Deletar</a>
           </div>
         </div>
       {% endfor %}

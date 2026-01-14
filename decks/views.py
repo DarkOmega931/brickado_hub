@@ -10,7 +10,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 
 from cards.models import DigimonCard, CardPrice
 
-from .models import Deck, DeckCard
+from .models import Deck, DeckCard, Archetype
 from .rules import (
     MAIN_LIMIT,
     EGG_LIMIT,
@@ -150,33 +150,54 @@ def deck_list(request):
 
 @login_required
 def deck_create(request):
+    # queryset de arquétipos para popular o select
+    archetypes = Archetype.objects.all().order_by("name")
+
     if request.method == "POST":
         nome = (request.POST.get("nome") or "").strip()
         jogo = (request.POST.get("jogo") or "DIGIMON").strip()
-
-        # pode vir nome de arquétipo livre ou o ID de Archetype, dependendo do form
-        arquetipo_nome = (request.POST.get("arquetipo_nome") or "").strip()
         descricao = (request.POST.get("descricao") or "").strip()
         publico = request.POST.get("publico") == "on"
 
+        # ID do arquétipo escolhido no select (pode vir vazio)
+        arquetipo_id = (request.POST.get("arquetipo") or "").strip()
+        arquetipo = None
+        if arquetipo_id:
+            try:
+                arquetipo = archetypes.get(pk=arquetipo_id)
+            except Archetype.DoesNotExist:
+                arquetipo = None
+
         if not nome:
             messages.error(request, "Informe o nome do deck.")
-            return render(request, "decks/deck_create.html", {})
+            return render(
+                request,
+                "decks/deck_create.html",
+                {
+                    "archetypes": archetypes,
+                    "selected_archetype_id": arquetipo_id,
+                },
+            )
 
         deck = Deck.objects.create(
             user=request.user,
             nome=nome,
             jogo=jogo,
-            arquetipo_nome=arquetipo_nome,
+            arquetipo=arquetipo,
+            # mantém um texto livre com o nome do arquétipo escolhido (compatibilidade)
+            arquetipo_nome=arquetipo.name if arquetipo else "",
             descricao=descricao,
             publico=publico,
         )
         messages.success(request, "Deck criado!")
         return redirect("decks:deck_detail", pk=deck.id)
 
-    return render(request, "decks/deck_create.html", {})
-
-
+    # GET: só renderiza o form com os arquétipos
+    return render(
+        request,
+        "decks/deck_create.html",
+        {"archetypes": archetypes},
+    )
 @login_required
 def deck_delete(request, pk):
     deck = get_object_or_404(Deck, pk=pk, user=request.user)

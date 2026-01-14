@@ -12,9 +12,9 @@
     </div>
 
     <div class="d-flex gap-2">
-      <a href="{% url 'deck_list' %}" class="btn btn-outline-secondary btn-sm">← Voltar</a>
-      <a href="{% url 'deck_import' pk=deck.id %}" class="btn btn-outline-warning btn-sm">Importar lista</a>
-      <a href="{% url 'deck_delete' pk=deck.id %}" class="btn btn-outline-danger btn-sm">Deletar</a>
+     <a href="{% url 'decks:deck_list' %}" class="btn btn-outline-secondary btn-sm">← Voltar</a>
+     <a href="{% url 'decks:deck_import' pk=deck.id %}" class="btn btn-outline-warning btn-sm">Importar lista</a>
+     <a href="{% url 'decks:deck_delete' pk=deck.id %}" class="btn btn-outline-danger btn-sm">Deletar</a>
     </div>
   </div>
 
@@ -43,7 +43,7 @@
                 {% endif %}
               </div>
 
-              <form method="post" action="{% url 'deck_remove_card' pk=deck.id deckcard_id=dc.id %}">
+              <form method="post" action="{% url 'decks:deck_remove_card' pk=deck.id deckcard_id=dc.id %}">
                 {% csrf_token %}
                 <button class="btn btn-outline-danger btn-sm">Remover</button>
               </form>
@@ -217,7 +217,7 @@
 
         <div class="col-12 d-flex gap-2">
             <button class="btn btn-warning w-100 fw-semibold">Filtrar</button>
-            <a href="{% url 'deck_detail' pk=deck.id %}" class="btn btn-outline-secondary w-100">Limpar</a>
+            <a href="{% url 'decks:deck_detail' pk=deck.id %}" class="btn btn-outline-secondary w-100">Limpar</a>
          </div>
     </form>
 
@@ -239,7 +239,7 @@
                 {% endif %}
               </div>
 
-              <form method="post" action="{% url 'deck_add_card' pk=deck.id %}">
+              <form method="post" action="{% url 'decks:deck_add_card' pk=deck.id %}">
                 {% csrf_token %}
                 <input type="hidden" name="card_id" value="{{ c.id }}">
                 <input type="number" name="qty" value="1" min="1" max="20" class="form-control form-control-sm mb-1" style="width:76px;">

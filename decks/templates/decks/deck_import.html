@@ -59,7 +59,7 @@
         </div>
 
         <button type="submit" class="btn btn-primary">Importar</button>
-        <a href="{% url 'deck_detail' deck.id %}" class="btn btn-secondary">Voltar</a>
+        <a href="{% url 'decks:deck_detail' pk=deck.id %}" class="btn btn-secondary">Voltar</a>
     </form>
 </div>
 {% endblock %}

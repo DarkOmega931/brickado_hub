@@ -20,7 +20,7 @@
                 Digite o nome da carta (mínimo 3 letras) para pesquisar na base local.
             </small>
         </div>
-        <a href="{% url 'deck_detail' deck_id=deck.id %}" class="btn btn-outline-secondary">
+        <a href="{% url 'decks:deck_detail' pk=deck.id %}" class="btn btn-outline-secondary">
             ← Voltar ao Deck
         </a>
     </div>

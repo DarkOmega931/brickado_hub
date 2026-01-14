@@ -1,0 +1,24 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+  <h1>Upload de arquétipos</h1>
+
+  <p class="help">
+    Envie um arquivo <strong>TXT</strong> (um arquétipo por linha) ou
+    <strong>CSV</strong> (coluna 1 = nome, coluna 2 opcional = slug).
+  </p>
+
+  <form method="post" enctype="multipart/form-data" novalidate>
+    {% csrf_token %}
+    <fieldset class="module aligned">
+      {{ form.as_p }}
+    </fieldset>
+    <div class="submit-row">
+      <input type="submit" value="{% translate 'Importar' %}" class="default">
+      <a href="{% url 'admin:decks_archetype_changelist' %}" class="button cancel-link">
+        {% translate 'Cancelar' %}
+      </a>
+    </div>
+  </form>
+{% endblock %}

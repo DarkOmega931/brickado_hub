@@ -10,7 +10,7 @@
 
     <form method="post" class="d-flex gap-2">
       {% csrf_token %}
-      <a href="{% url 'deck_detail' pk=deck.id %}" class="btn btn-outline-secondary">Cancelar</a>
+      <a href="{% url 'decks:deck_detail' pk=deck.id %}" class="btn btn-outline-secondary">Cancelar</a>
       <button class="btn btn-danger">Sim, deletar</button>
     </form>
   </div>
