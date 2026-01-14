@@ -16,7 +16,12 @@ def _split_env_list(name: str, default: str = ""):
     return [item.strip() for item in value.split(",") if item.strip()]
 
 if DEBUG:
-    ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
+    ALLOWED_HOSTS = [
+    "127.0.0.1",
+    "localhost",
+    "brickado-hub.onrender.com",
+]
+
 else:
     ALLOWED_HOSTS = _split_env_list("ALLOWED_HOSTS")
     if not ALLOWED_HOSTS:
