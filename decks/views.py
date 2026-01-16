@@ -10,6 +10,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 
 from cards.models import DigimonCard, CardPrice
 
+from cards.models import DigimonCard, CardPrice
+
 from .models import Deck, DeckCard, Archetype
 from .rules import (
     MAIN_LIMIT,
@@ -156,6 +158,7 @@ def deck_create(request):
     if request.method == "POST":
         nome = (request.POST.get("nome") or "").strip()
         jogo = (request.POST.get("jogo") or "DIGIMON").strip()
+        arquetipo = (request.POST.get("arquetipo") or "").strip()
         descricao = (request.POST.get("descricao") or "").strip()
         publico = request.POST.get("publico") == "on"
 
@@ -184,8 +187,6 @@ def deck_create(request):
             nome=nome,
             jogo=jogo,
             arquetipo=arquetipo,
-            # mantém um texto livre com o nome do arquétipo escolhido (compatibilidade)
-            arquetipo_nome=arquetipo.name if arquetipo else "",
             descricao=descricao,
             publico=publico,
         )

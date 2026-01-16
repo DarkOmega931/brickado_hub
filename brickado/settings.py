@@ -3,28 +3,10 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# =========================
-# Configurações básicas
-# =========================
-SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key-change-me")
-DEBUG = os.getenv("DEBUG", "1") == "1"
+SECRET_KEY = "dev-secret-key-change-me"
+DEBUG = True  # default local
+ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
 
-def _split_env_list(name: str, default: str = ""):
-    value = os.getenv(name, default)
-    if not value:
-        return []
-    return [item.strip() for item in value.split(",") if item.strip()]
-
-if DEBUG:
-    ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "").split(",")
-if not ALLOWED_HOSTS or ALLOWED_HOSTS == [""]:
-    ALLOWED_HOSTS = ["127.0.0.1", "localhost", "brickado-hub.onrender.com"]
-
-else:
-    ALLOWED_HOSTS = _split_env_list("ALLOWED_HOSTS")
-    if not ALLOWED_HOSTS:
-        # ajuste para o domínio real do Render, se necessário
-        ALLOWED_HOSTS = ["brickado-hub.onrender.com"]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
