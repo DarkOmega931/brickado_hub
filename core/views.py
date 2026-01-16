@@ -89,3 +89,7 @@ def logout_view(request):
     """
     logout(request)
     return redirect("home")
+from django.http import HttpResponse
+
+def profile_edit(request):
+    return HttpResponse("profile_edit OK (temporario)")
