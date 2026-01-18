@@ -5,11 +5,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = "dev-secret-key-change-me"
 DEBUG = os.getenv("DEBUG", "False").lower() == "true"
-ALLOWED_HOSTS = [
-    "brickado-hub.onrender.com",
-    "localhost",
-    "127.0.0.1",
-]
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost,brickado-hub.onrender.com").split(",")
+ALLOWED_HOSTS = [h.strip() for h in ALLOWED_HOSTS if h.strip()]
 # =========================
 # Aplicações instaladas
 
@@ -114,13 +111,19 @@ LOGOUT_REDIRECT_URL = "/"
 # =========================
 # CSRF / Segurança
 # =========================
-if DEBUG:
+import os
+
+CSRF_TRUSTED_ORIGINS = []
+
+# Permite configurar via env var (opcional)
+env_csrf = os.getenv("CSRF_TRUSTED_ORIGINS", "").strip()
+if env_csrf:
+    CSRF_TRUSTED_ORIGINS = [x.strip() for x in env_csrf.split(",") if x.strip()]
+
+# Fallback obrigatório (Render)
+if not CSRF_TRUSTED_ORIGINS:
     CSRF_TRUSTED_ORIGINS = [
+        "https://brickado-hub.onrender.com",
         "http://127.0.0.1:8000",
         "http://localhost:8000",
-        "https://brickado-hub.onrender.com",
     ]
-else:
-    CSRF_TRUSTED_ORIGINS = _split_env_list("CSRF_TRUSTED_ORIGINS")
-    if not CSRF_TRUSTED_ORIGINS:
-        CSRF_TRUSTED_ORIGINS = ["https://brickado-hub.onrender.com"]
