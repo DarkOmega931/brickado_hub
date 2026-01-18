@@ -5,6 +5,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = "dev-secret-key-change-me"
 DEBUG = os.getenv("DEBUG", "False").lower() == "true"
+ALLOWED_HOSTS = [
+    "brickado-hub.onrender.com",
+    "localhost",
+    "127.0.0.1",
+]
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "brickado-hub.onrender.com").split(",")
 
 
