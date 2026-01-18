@@ -4,8 +4,8 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = "dev-secret-key-change-me"
-DEBUG = True  # default local
-ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
+DEBUG = os.getenv("DEBUG", "False").lower() == "true"
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "brickado-hub.onrender.com").split(",")
 
 
 INSTALLED_APPS = [
@@ -113,6 +113,7 @@ if DEBUG:
     CSRF_TRUSTED_ORIGINS = [
         "http://127.0.0.1:8000",
         "http://localhost:8000",
+        "https://brickado-hub.onrender.com",
     ]
 else:
     CSRF_TRUSTED_ORIGINS = _split_env_list("CSRF_TRUSTED_ORIGINS")
